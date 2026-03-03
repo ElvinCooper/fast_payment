@@ -3,4 +3,4 @@ pydantic
 mysql-connector-python
 python-dotenv
 uvicorn
-vercel-fastapi
+
