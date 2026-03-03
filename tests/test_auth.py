@@ -1,0 +1,33 @@
+import pytest
+from app.auth_utils import create_access_token
+
+def test_login_success(client, mock_db_conn):
+    mock_conn, mock_cursor = mock_db_conn
+    
+    # Simular que el usuario existe en la DB
+    mock_cursor.fetchone.return_value = {"idusuario": 1, "usuario": "testuser"}
+    
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"usuario": "testuser", "password": "correct_clave"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["usuario"] == "testuser"
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+
+def test_login_failure(client, mock_db_conn):
+    mock_conn, mock_cursor = mock_db_conn
+    
+    # Simular que el usuario NO existe o clave incorrecta
+    mock_cursor.fetchone.return_value = None
+    
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"usuario": "testuser", "password": "wrong_clave"}
+    )
+    
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Usuario o clave incorrectos"
