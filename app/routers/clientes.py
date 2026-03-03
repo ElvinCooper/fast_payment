@@ -40,14 +40,16 @@ def buscar_clientes_por_nombre(nombre: str = Query(..., description="Nombre o pa
 
 
 @router.get("/{codigo}", response_model=List[ClienteResponse])
-def obtener_clientes(codigo: str, conn: MySQLConnection = Depends(get_connection)):
+def obtener_clientes(codigo: int, conn: MySQLConnection = Depends(get_connection)):
     """Obtener cliente por su codigo"""
     cursor = conn.cursor(dictionary=True)
 
-    query = f"""SELECT CL.idcliente, CL.CLIENTE, PR.nprestamo, PR.vprestamo FROM cliente CL
-            JOIN prestamo PR ON CL.idcliente = PR.CODIGO
-            WHERE CL.idcliente = %s;
-         """
+    query = """
+        SELECT CL.idcliente, CL.CLIENTE, PR.nprestamo, PR.vprestamo 
+        FROM cliente CL
+        JOIN prestamo PR ON CL.idcliente = PR.CODIGO
+        WHERE CL.idcliente = %s
+    """
     cursor.execute(query, (codigo,))
     results = cursor.fetchall()
     cursor.close()

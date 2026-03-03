@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import clientes, pagos
+from app.routers import clientes, pagos, usuarios, auth
 from datetime import datetime
 
 app = FastAPI(
@@ -10,6 +10,8 @@ app = FastAPI(
 
 app.include_router(clientes.router)
 app.include_router(pagos.router)
+app.include_router(usuarios.router)
+app.include_router(auth.router)
 
 
 @app.get("/")
