@@ -1,0 +1,9 @@
+# Ignorar carpetas de entornos virtuales y caches de desarrollo
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.vercel/
+.ruff_cache/
+*.log
