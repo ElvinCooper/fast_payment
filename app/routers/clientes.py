@@ -2,16 +2,21 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from app.schemas.cliente_schema import ClienteResponse, ClientBase
 from typing import List
 from app.database import get_connection
+from app.auth_utils import get_current_user
 from mysql.connector import MySQLConnection
 from datetime import datetime
 
-router = APIRouter(prefix="/api/v1/clientes", tags=["Clientes"])
+router = APIRouter(
+    prefix="/api/v1/clientes", 
+    tags=["Clientes"],
+    dependencies=[Depends(get_current_user)]
+)
 
 
 @router.get("/buscar", response_model=List[ClienteResponse], summary="Buscar clientes por nombre (LIKE)",)
 def buscar_clientes_por_nombre(nombre: str = Query(..., description="Nombre o parte del nombre del cliente a buscar"),
     conn: MySQLConnection = Depends(get_connection),):
-    """Buscar clientes por nombre"""
+    """Buscar clientes por nombre (Protegido con JWT)"""
     cursor = conn.cursor(dictionary=True)
 
     query = """
@@ -39,9 +44,9 @@ def buscar_clientes_por_nombre(nombre: str = Query(..., description="Nombre o pa
 
 
 
-@router.get("/{codigo}", response_model=List[ClienteResponse])
-def obtener_clientes(codigo: int, conn: MySQLConnection = Depends(get_connection)):
-    """Obtener cliente por su codigo"""
+@router.get("/{id}", response_model=List[ClienteResponse])
+def obtener_clientes(id: int, conn: MySQLConnection = Depends(get_connection)):
+    """Obtener cliente por su id (Protegido con JWT)"""
     cursor = conn.cursor(dictionary=True)
 
     query = """
@@ -50,7 +55,7 @@ def obtener_clientes(codigo: int, conn: MySQLConnection = Depends(get_connection
         JOIN prestamo PR ON CL.idcliente = PR.CODIGO
         WHERE CL.idcliente = %s
     """
-    cursor.execute(query, (codigo,))
+    cursor.execute(query, (id,))
     results = cursor.fetchall()
     cursor.close()
 

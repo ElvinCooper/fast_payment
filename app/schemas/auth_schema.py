@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class LoginRequest(BaseModel):
@@ -9,4 +10,6 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     idusuario: int
     usuario: str
+    access_token: str
+    token_type: str
     message: str
