@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from decimal import Decimal
 from datetime import datetime
@@ -13,5 +13,5 @@ class ClienteResponse(BaseModel):
     idcliente: int
     CLIENTE: str
     nprestamo: int
-    vprestamo: float
+    vprestamo: Decimal = Field(max_digits=10, decimal_places=2)
     fecha: Optional[str] = None

@@ -8,26 +8,10 @@ from datetime import datetime
 router = APIRouter(prefix="/api/v1/clientes", tags=["Clientes"])
 
 
-# Datos simulados (puedes conectar luego a tu DB)
-clientes_data = {
-    "C001": {"nombre": "Juan Pérez", "adeudo": 3500.50},
-    "C002": {"nombre": "Ana Gómez", "adeudo": 1200.00},
-    "C003": {"nombre": "Carlos Díaz", "adeudo": 0.0},
-}
-
-
-@router.get(
-    "/buscar",
-    response_model=List[ClienteResponse],
-    summary="Buscar clientes por nombre (LIKE)",
-)
-def buscar_clientes_por_nombre(
-    nombre: str = Query(
-        ..., description="Nombre o parte del nombre del cliente a buscar"
-    ),
-    conn: MySQLConnection = Depends(get_connection),
-):
-    """Obtener cliente por su nombre"""
+@router.get("/buscar", response_model=List[ClienteResponse], summary="Buscar clientes por nombre (LIKE)",)
+def buscar_clientes_por_nombre(nombre: str = Query(..., description="Nombre o parte del nombre del cliente a buscar"),
+    conn: MySQLConnection = Depends(get_connection),):
+    """Buscar clientes por nombre"""
     cursor = conn.cursor(dictionary=True)
 
     query = """
@@ -52,6 +36,7 @@ def buscar_clientes_por_nombre(
         r["fecha"] = now
 
     return resultados
+
 
 
 @router.get("/{codigo}", response_model=List[ClienteResponse])
