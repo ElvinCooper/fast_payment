@@ -51,6 +51,7 @@ def registrar_pago(pago: PagoRequest, conn: MySQLConnection = Depends(get_connec
             hora_full,           # Hora (Objeto datetime completo para campo DATETIME)
             pago.monto,          # MontoPgdo
             pago.idusuario,      # nusuario
+            #pago.nota,           # nota   
             pago.usuario_nombre  # cusuario
         ))
         conn.commit()
