@@ -3,7 +3,7 @@ from app.schemas.pago_schema import PagoRequest, PagoResponse
 from app.database import get_connection
 from app.auth_utils import get_current_user
 from mysql.connector import MySQLConnection, Error
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(
     prefix="/api/v1/pagos", 
@@ -14,12 +14,13 @@ router = APIRouter(
 
 @router.post("/", response_model=PagoResponse)
 def registrar_pago(pago: PagoRequest, conn: MySQLConnection = Depends(get_connection)):
-    """Registrar un nuevo pago en la tabla handheldata (Fecha y Hora automáticas)"""
+    """Registrar un nuevo pago en el sistema"""
     cursor = conn.cursor()
     
     '''# Consultar cuánto debe el cliente actualmente
-    query_deuda = "SELECT vprestamo FROM prestamo WHERE CODIGO = %s LIMIT 1"
-    cursor.execute(query_deuda, (pago.idcliente,))
+    query_deuda = "SELECT vprestamo FROM prestamo WHERE CODIGO = %s AND nprestamo = %s LIMIT 1"
+    
+    cursor.execute(query_deuda, (pago.idcliente, pago.nprestamo,))
     resultado = cursor.fetchone()
    
     if not resultado:
@@ -27,15 +28,16 @@ def registrar_pago(pago: PagoRequest, conn: MySQLConnection = Depends(get_connec
    
     deuda_actual = resultado['vprestamo']
    
-    # Comparar el monto enviado con la deuda real
+    # Comparar el monto enviado con la deuda total
     if pago.monto > deuda_actual:
         raise HTTPException(status_code=400, detail=f"El monto ({pago.monto}) excede la deuda actual ({deuda_actual})")'''
     
     
     # Extraer el momento actual completo
-    ahora = datetime.now()
-    fecha_solo = ahora.date()            # Solo la fecha: YYYY-MM-DD
-    hora_full = ahora                    # El objeto datetime completo (Fecha + Hora)
+    offset = timezone(timedelta(hours=-4)) # Zona horaria de RD.
+    ahora = datetime.now(offset)           # Tiempo Actual
+    fecha_solo = ahora.date()              # estraer solo la fecha
+    hora_full = ahora.replace(tzinfo=None) # extraer solo la fecha
     
     # Consulta con 7 columnas para 7 valores
     query = """

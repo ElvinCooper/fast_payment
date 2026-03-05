@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
-from app.schemas.cliente_schema import ClienteResponse, ClientBase
+from app.schemas.cliente_schema import ClienteResponse, ParamNombre, NombreSinNumeros
 from typing import List
 from app.database import get_connection
 from app.auth_utils import get_current_user
@@ -13,9 +13,11 @@ router = APIRouter(
 )
 
 
-@router.get("/buscar", response_model=List[ClienteResponse], summary="Buscar clientes por nombre (LIKE)",)
-def buscar_clientes_por_nombre(nombre: str = Query(..., description="Nombre o parte del nombre del cliente a buscar"),
-    conn: MySQLConnection = Depends(get_connection),):
+@router.get("/buscar", response_model=List[ClienteResponse],)
+def buscar_clientes_por_nombre(
+    params: ParamNombre = Depends(),
+    conn: MySQLConnection = Depends(get_connection),
+):
     """Buscar clientes por nombre (Protegido con JWT)"""
     cursor = conn.cursor(dictionary=True)
 
@@ -23,11 +25,11 @@ def buscar_clientes_por_nombre(nombre: str = Query(..., description="Nombre o pa
        SELECT CL.idcliente, CL.CLIENTE, PR.nprestamo, PR.vprestamo 
        FROM cliente CL
        JOIN prestamo PR ON CL.idcliente = PR.CODIGO
-       WHERE CL.CLIENTE LIKE %s
+       WHERE CL.CLIENTE LIKE %s AND CL.CLIENTE IS NOT NULL
        LIMIT 20
     """
 
-    cursor.execute(query, (f"%{nombre}%",))
+    cursor.execute(query, (f"%{params.CLIENTE}%",))
     resultados = cursor.fetchall()
     cursor.close()
 
