@@ -44,7 +44,7 @@ def buscar_clientes_por_nombre( params: ParamNombre = Depends(), conn: MySQLConn
 
 
 @router.get("/{id}", response_model=List[ClienteResponse])
-def obtener_clientes(id: int, conn: MySQLConnection = Depends(get_connection)):
+def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_connection)):
     """Obtener cliente por su id (Protegido con JWT)"""
     cursor = conn.cursor(dictionary=True)
 
