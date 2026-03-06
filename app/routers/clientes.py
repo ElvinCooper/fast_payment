@@ -14,10 +14,7 @@ router = APIRouter(
 
 
 @router.get("/buscar", response_model=List[ClienteResponse],)
-def buscar_clientes_por_nombre(
-    params: ParamNombre = Depends(),
-    conn: MySQLConnection = Depends(get_connection),
-):
+def buscar_clientes_por_nombre( params: ParamNombre = Depends(), conn: MySQLConnection = Depends(get_connection),):
     """Buscar clientes por nombre (Protegido con JWT)"""
     cursor = conn.cursor(dictionary=True)
 
@@ -63,7 +60,36 @@ def obtener_clientes(id: int, conn: MySQLConnection = Depends(get_connection)):
 
     if not results:
         raise HTTPException(
-            status_code=404, detail="No se encontraron clientes o prestamos"
+            status_code=404, detail="No se encontraron clientes con prestamos activos."
+        )
+
+    now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    for r in results:
+        r["fecha"] = now
+
+    return results
+
+
+
+
+
+@router.get("/", response_model=List[ClienteResponse])
+def obtener_clientes(conn: MySQLConnection = Depends(get_connection)):
+    """Obtener todos los clientes con prestamos activos"""
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT CL.idcliente, CL.CLIENTE, PR.nprestamo, PR.vprestamo 
+        FROM cliente CL
+        JOIN prestamo PR ON CL.idcliente = PR.CODIGO        
+    """
+    cursor.execute(query,)
+    results = cursor.fetchall()
+    cursor.close()
+
+    if not results:
+        raise HTTPException(
+            status_code=404, detail="No se encontraron clientes con prestamos activos"
         )
 
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")

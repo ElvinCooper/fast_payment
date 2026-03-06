@@ -4,17 +4,7 @@ from typing import Optional, Any, Annotated
 from decimal import Decimal
 from datetime import datetime
 
-# funcion para validar que el campo sea siempre integer.
-def rechazar_enteros(cls, campo: Any):
-        if isinstance(campo, int):
-            raise PydanticCustomError(
-                'str_type',
-                'El nombre no debe conteneder numeros.',
-                {}
-            )
-        return campo
 
-IdClienteSctricto = Annotated[str, BeforeValidator(rechazar_enteros)]
 
 # funcion reutilizable para validar que el campo sea string sin numeros
 def nombre_sin_numeros(valor: Any) -> str:

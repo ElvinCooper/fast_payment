@@ -19,7 +19,7 @@ def test_buscar_clientes_success(client, auth_header, mock_db_conn):
         {"idcliente": 1, "CLIENTE": "Juan Perez", "nprestamo": 123, "vprestamo": 1000.50}
     ]
     
-    response = client.get("/api/v1/clientes/buscar?nombre=juan", headers=auth_header)
+    response = client.get("/api/v1/clientes/buscar?CLIENTE=juan", headers=auth_header)
     
     assert response.status_code == 200
     data = response.json()
@@ -35,4 +35,4 @@ def test_obtener_cliente_por_id_404(client, auth_header, mock_db_conn):
     response = client.get("/api/v1/clientes/999", headers=auth_header)
     
     assert response.status_code == 404
-    assert "No se encontraron clientes o prestamos" in response.json()["detail"]
+    assert "No se encontraron clientes con prestamos activos" in response.json()["detail"]
