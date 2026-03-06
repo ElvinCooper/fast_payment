@@ -5,40 +5,37 @@ from decimal import Decimal
 from datetime import datetime
 
 
-
 # funcion reutilizable para validar que el campo sea string sin numeros
 def nombre_sin_numeros(valor: Any) -> str:
     if valor is None:
         raise ValueError("El CLIENTE no puede ser nulo")
     if isinstance(valor, str) and any(char.isdigit() for char in valor):
-        raise PydanticCustomError(
-            'str_type',
-            'El nombre no debe contener numeros.',
-            {}
-        )
+        raise PydanticCustomError("str_type", "El nombre no debe contener numeros.", {})
     return valor
+
 
 NombreSinNumeros = Annotated[str, BeforeValidator(nombre_sin_numeros)]
 
 
 class ParamNombre(BaseModel):
-    cliente: NombreSinNumeros = Field(..., description="Nombre o parte del nombre del cliente a buscar")
-    
+    CLIENTE: NombreSinNumeros = Field(
+        ..., description="Nombre o parte del nombre del cliente a buscar"
+    )
+
 
 class ClientBase(BaseModel):
     idcliente: int
-    cliente: str
+    CLIENTE: str
 
 
 class ClienteResponse(BaseModel):
     idcliente: int
-    cliente: Optional[NombreSinNumeros]
+    CLIENTE: Optional[NombreSinNumeros]
     nprestamo: int
     vprestamo: Decimal = Field(max_digits=10, decimal_places=2)
     fecha: Optional[str] = None
-    
-     
-    @field_validator('cliente', mode='before')
+
+    @field_validator("CLIENTE", mode="before")
     @classmethod
     def strip_cliente(cls, v):
         if v is None:

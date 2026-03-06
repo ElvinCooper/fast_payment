@@ -7,9 +7,9 @@ from mysql.connector import MySQLConnection
 from datetime import datetime
 
 router = APIRouter(
-    prefix="/api/v1/clientes", 
+    prefix="/api/v1/clientes",
     tags=["Clientes"],
-    dependencies=[Depends(get_current_user)]
+    dependencies=[Depends(get_current_user)],
 )
 
 
@@ -23,7 +23,9 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_connection)):
         FROM cliente CL
         JOIN prestamo PR ON CL.idcliente = PR.CODIGO        
     """
-    cursor.execute(query,)
+    cursor.execute(
+        query,
+    )
     results = cursor.fetchall()
     cursor.close()
 
@@ -38,8 +40,15 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_connection)):
 
     return results
 
-@router.get("/buscar", response_model=List[ClienteResponse],)
-def buscar_clientes_por_nombre( params: ParamNombre = Depends(), conn: MySQLConnection = Depends(get_connection),):
+
+@router.get(
+    "/buscar",
+    response_model=List[ClienteResponse],
+)
+def buscar_clientes_por_nombre(
+    params: ParamNombre = Depends(),
+    conn: MySQLConnection = Depends(get_connection),
+):
     """Buscar clientes por nombre (Protegido con JWT)"""
     cursor = conn.cursor(dictionary=True)
 
@@ -51,7 +60,7 @@ def buscar_clientes_por_nombre( params: ParamNombre = Depends(), conn: MySQLConn
        LIMIT 20
     """
 
-    cursor.execute(query, (f"%{params.cliente}%",))
+    cursor.execute(query, (f"%{params.CLIENTE}%",))
     resultados = cursor.fetchall()
     cursor.close()
 
@@ -65,7 +74,6 @@ def buscar_clientes_por_nombre( params: ParamNombre = Depends(), conn: MySQLConn
         r["fecha"] = now
 
     return resultados
-
 
 
 @router.get("/{id}", response_model=List[ClienteResponse])
