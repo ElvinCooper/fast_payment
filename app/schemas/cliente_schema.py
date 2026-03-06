@@ -22,23 +22,23 @@ NombreSinNumeros = Annotated[str, BeforeValidator(nombre_sin_numeros)]
 
 
 class ParamNombre(BaseModel):
-    CLIENTE: NombreSinNumeros = Field(..., description="Nombre o parte del nombre del cliente a buscar")
+    cliente: NombreSinNumeros = Field(..., description="Nombre o parte del nombre del cliente a buscar")
     
 
 class ClientBase(BaseModel):
     idcliente: int
-    CLIENTE: str
+    cliente: str
 
 
 class ClienteResponse(BaseModel):
     idcliente: int
-    CLIENTE: Optional[NombreSinNumeros]
+    cliente: Optional[NombreSinNumeros]
     nprestamo: int
     vprestamo: Decimal = Field(max_digits=10, decimal_places=2)
     fecha: Optional[str] = None
     
      
-    @field_validator('CLIENTE', mode='before')
+    @field_validator('cliente', mode='before')
     @classmethod
     def strip_cliente(cls, v):
         if v is None:
