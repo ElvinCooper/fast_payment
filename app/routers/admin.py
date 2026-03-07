@@ -17,10 +17,7 @@ router = APIRouter(
 
 
 @router.get("/routing", response_model=List[UserDBRoutingResponse])
-def get_all_routes(
-    conn: MySQLConnection = Depends(get_connection),
-    current_user: dict = Depends(get_current_user),
-):
+def get_all_routes(conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user), ):
     """Obtener todas las rutas de base de datos"""
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM user_db_routing ORDER BY id DESC")
@@ -30,11 +27,7 @@ def get_all_routes(
 
 
 @router.post("/routing", response_model=UserDBRoutingResponse)
-def create_route(
-    route: UserDBRoutingCreate,
-    conn: MySQLConnection = Depends(get_connection),
-    current_user: dict = Depends(get_current_user),
-):
+def create_route(route: UserDBRoutingCreate, conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user),):
     """Crear una nueva ruta de base de datos"""
     cursor = conn.cursor()
     query = """
@@ -64,12 +57,8 @@ def create_route(
 
 
 @router.get("/server/{server_id}/databases")
-def get_server_databases(
-    server_id: int,
-    conn: MySQLConnection = Depends(get_connection),
-    current_user: dict = Depends(get_current_user),
-):
-    """Obtener las bases de datos disponibles en un servidor"""
+def get_server_databases(server_id: int, conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user),):
+    """Obtener las bases de datos disponibles en el servidor indicado"""
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM user_db_routing WHERE id = %s", (server_id,))
     route = cursor.fetchone()
@@ -88,11 +77,8 @@ def get_server_databases(
         )
         temp_cursor = temp_conn.cursor()
         temp_cursor.execute("SHOW DATABASES")
-        databases = [
-            db[0]
-            for db in temp_cursor.fetchall()
-            if db[0] not in ("information_schema", "performance_schema", "mysql", "sys")
-        ]
+        
+        databases = [db[0] for db in temp_cursor.fetchall() if db[0] not in ("information_schema", "performance_schema", "mysql", "sys")]
         temp_cursor.close()
         temp_conn.close()
         return {"databases": databases}
@@ -103,10 +89,7 @@ def get_server_databases(
 
 
 @router.get("/servidores", response_model=List[ServidorResponse])
-def get_all_servidores(
-    conn: MySQLConnection = Depends(get_connection),
-    current_user: dict = Depends(get_current_user),
-):
+def get_all_servidores(conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user),):
     """Obtener todos los servidores"""
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM servidores ORDER BY id DESC")
