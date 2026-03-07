@@ -12,9 +12,28 @@ router = APIRouter(
 )
 
 
+@router.get("/", response_model=List[UserBase])
+def obtener_usuarios(conn: MySQLConnection = Depends(get_connection)):
+    """Obtener todos los usuarios del sistema"""
+    cursor = conn.cursor(dictionary=True)
+
+    query = "SELECT idusuario, usuario FROM usuario"
+    cursor.execute(query,)
+    usuarios = cursor.fetchall()
+    cursor.close()
+
+    if not usuarios:
+        raise HTTPException(
+            status_code=404, detail="No existen usuarios en el sistema"
+        )
+
+    return usuarios
+
+
+
 @router.get("/{id}", response_model=UserBase)
-def obtener_usuario(id: int, conn: MySQLConnection = Depends(get_connection)):
-    """Obtener un usuario por su id (Protegido con JWT)"""
+def obtener_usuario_id(id: int, conn: MySQLConnection = Depends(get_connection)):
+    """Obtener un usuario por su id """
     cursor = conn.cursor(dictionary=True)
 
     query = "SELECT idusuario, usuario FROM usuario WHERE idusuario = %s"
