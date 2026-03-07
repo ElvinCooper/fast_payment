@@ -3,7 +3,6 @@ from app.schemas.routing_schema import (
     UserDBRoutingResponse,
     UserDBRoutingCreate,
     ServidorResponse,
-    ServidorCreate,
 )
 from app.database import get_connection
 from app.auth_utils import get_current_user
@@ -114,35 +113,3 @@ def get_all_servidores(
     results = cursor.fetchall()
     cursor.close()
     return results
-
-
-@router.post("/servidores", response_model=ServidorResponse)
-def create_servidor(
-    servidor: ServidorCreate,
-    conn: MySQLConnection = Depends(get_connection),
-    current_user: dict = Depends(get_current_user),
-):
-    """Crear un nuevo servidor"""
-    cursor = conn.cursor()
-    query = """
-        INSERT INTO servidores (nombre_servidor, ip_address, descripcion, activo)
-        VALUES (%s, %s, %s, %s)
-    """
-    cursor.execute(
-        query,
-        (
-            servidor.nombre_servidor,
-            servidor.ip_address,
-            servidor.descripcion,
-            servidor.activo,
-        ),
-    )
-    conn.commit()
-    servidor_id = cursor.lastrowid
-    cursor.close()
-
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM servidores WHERE id = %s", (servidor_id,))
-    result = cursor.fetchone()
-    cursor.close()
-    return result

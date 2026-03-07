@@ -10,10 +10,6 @@ class ServidorBase(BaseModel):
     activo: Optional[bool] = True
 
 
-class ServidorCreate(ServidorBase):
-    pass
-
-
 class ServidorResponse(ServidorBase):
     id: int
     created_at: Optional[datetime] = None
