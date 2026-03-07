@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from app.routers import clientes, pagos, usuarios, auth
+from app.routers import clientes, pagos, usuarios, auth, admin
 from datetime import datetime
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -23,9 +23,10 @@ app.include_router(clientes.router)
 app.include_router(pagos.router)
 app.include_router(usuarios.router)
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 
 @app.get("/")
-@limiter.limit("5/minute") # Límite más estricto para el root
+@limiter.limit("5/minute")  # Límite más estricto para el root
 def root(request: Request):
     return {"message": "API activa", "timestamp": datetime.now()}
