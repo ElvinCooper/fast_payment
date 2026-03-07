@@ -3,6 +3,25 @@ from typing import Optional
 from datetime import datetime
 
 
+class ServidorBase(BaseModel):
+    nombre_servidor: str = Field(..., max_length=100)
+    ip_address: str = Field(..., max_length=45)
+    descripcion: Optional[str] = None
+    activo: Optional[bool] = True
+
+
+class ServidorCreate(ServidorBase):
+    pass
+
+
+class ServidorResponse(ServidorBase):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class UserDBRoutingBase(BaseModel):
     user_id: int
     ip_address: str = Field(..., max_length=45)
