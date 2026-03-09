@@ -1,14 +1,18 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.routing_schema import (
-    UserDBRoutingResponse,
-    UserDBRoutingCreate,
-    ServidorResponse,
-)
+from app.schemas.routing_schema import UserDBRoutingResponse, UserDBRoutingUpdate
 from app.database import get_connection
 from app.auth_utils import get_current_user
 from mysql.connector import MySQLConnection
 from typing import List
 import mysql.connector
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+HOST=os.getenv("HOST")
+PORT=os.getenv("PORT")
+USER= os.getenv("USER")
+DBPASSWORD= os.getenv("DBPASSWORD")
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -16,63 +20,63 @@ router = APIRouter(
 )
 
 
-@router.get("/routing", response_model=List[UserDBRoutingResponse])
-def get_all_routes(conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user), ):
-    """Obtener todas las rutas de base de datos"""
+@router.get("/users", response_model=List[UserDBRoutingResponse])
+def get_all_acces(conn: MySQLConnection = Depends(get_connection),):
+    """Lista usuarios con acceso al sistema"""
+    
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_db_routing ORDER BY id DESC")
+    cursor.execute("SELECT idusuario, usuario FROM usuario WHERE idusuario not in (1, 2) ORDER BY idusuario")
     results = cursor.fetchall()
     cursor.close()
+    
     return results
 
 
-@router.post("/routing", response_model=UserDBRoutingResponse)
-def create_route(route: UserDBRoutingCreate, conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user),):
-    """Crear una nueva ruta de base de datos"""
+@router.put("/user/routing")
+def asignar_acceso(user_data: UserDBRoutingUpdate, conn: MySQLConnection = Depends(get_connection),):
+    """Asignar BD y clave a un usuario"""
     cursor = conn.cursor()
+    
+     # Verificar si el usuario existe
+    cursor.execute("SELECT idusuario FROM usuario WHERE idusuario = %s", (user_data.idusuario,))
+    user_exists = cursor.fetchone()
+    
+    if not user_exists:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # actualizar campos del usuario indicado
     query = """
-        INSERT INTO user_db_routing (user_id, ip_address, port, db_name, db_user, db_password)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """
-    cursor.execute(
-        query,
-        (
-            route.user_id,
-            route.ip_address,
-            route.port,
-            route.db_name,
-            route.db_user,
-            route.db_password,
-        ),
-    )
-    conn.commit()
-    route_id = cursor.lastrowid
-    cursor.close()
+       UPDATE usuario
+       SET `database` = %s,
+           clave = %s
+       WHERE idusuario = %s
+    """    
+    
+    cursor.execute(query, (user_data.database, user_data.clave, user_data.idusuario,),)
+    conn.commit()    
+    cursor.close()        
 
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_db_routing WHERE id = %s", (route_id,))
-    result = cursor.fetchone()
-    cursor.close()
-    return result
+    return HTTPException(status_code=200, detail= {"message": "Usuario actualizado exitosamente"})
 
 
-@router.get("/server/{server_id}/databases")
-def get_server_databases(server_id: int, conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user),):
-    """Obtener las bases de datos disponibles en el servidor indicado"""
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_db_routing WHERE id = %s", (server_id,))
-    route = cursor.fetchone()
-    cursor.close()
-
-    if not route:
-        raise HTTPException(status_code=404, detail="Servidor no encontrado")
+@router.get("/server/databases")
+def get_server_databases(conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user),):
+    """Obtener las bases de datos disponibles en el servidor"""
+    
+    # Validar que el usuario sea administrador
+    admin_user_ids = [1, 2, 3]
+    if current_user.get('id') not in admin_user_ids:
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso denegado. Solo administradores pueden acceder a esta función")                    
 
     try:
         temp_conn = mysql.connector.connect(
-            host=route["ip_address"],
-            port=route["port"],
-            user=route["db_user"],
-            password=route["db_password"],
+            host=HOST, 
+            port=PORT,
+            user=USER,
+            password=DBPASSWORD,
             connect_timeout=5,
         )
         temp_cursor = temp_conn.cursor()
@@ -81,18 +85,9 @@ def get_server_databases(server_id: int, conn: MySQLConnection = Depends(get_con
         databases = [db[0] for db in temp_cursor.fetchall() if db[0] not in ("information_schema", "performance_schema", "mysql", "sys")]
         temp_cursor.close()
         temp_conn.close()
+        
         return {"databases": databases}
     except mysql.connector.Error as e:
         raise HTTPException(
             status_code=500, detail=f"Error al conectar al servidor: {str(e)}"
         )
-
-
-@router.get("/servidores", response_model=List[ServidorResponse])
-def get_all_servidores(conn: MySQLConnection = Depends(get_connection), current_user: dict = Depends(get_current_user),):
-    """Obtener todos los servidores"""
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM servidores ORDER BY id DESC")
-    results = cursor.fetchall()
-    cursor.close()
-    return results

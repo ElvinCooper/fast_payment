@@ -43,7 +43,7 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_connection)):
 
 @router.get("/buscar", response_model=List[ClienteResponse],)
 def buscar_clientes_por_nombre(params: ParamNombre = Depends(), conn: MySQLConnection = Depends(get_connection),):
-    """Buscar clientes por nombre (Protegido con JWT)"""
+    """Buscar clientes por nombre)"""
     cursor = conn.cursor(dictionary=True)
 
     query = """
@@ -72,7 +72,7 @@ def buscar_clientes_por_nombre(params: ParamNombre = Depends(), conn: MySQLConne
 
 @router.get("/{id}", response_model=List[ClienteResponse])
 def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_connection)):
-    """Obtener cliente por su id (Protegido con JWT)"""
+    """Obtener cliente por su id"""
     cursor = conn.cursor(dictionary=True)
 
     query = """
