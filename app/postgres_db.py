@@ -35,6 +35,7 @@ def sincronizar_usuarios():
         user=USER,
         password=DBPASSWORD,
         database=DATABASE,
+        charset='utf8'
     )
     cursor = mysql_conn.cursor()
     cursor.execute("SELECT idusuario, usuario FROM usuario")
