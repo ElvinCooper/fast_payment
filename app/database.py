@@ -11,26 +11,28 @@ USER = os.getenv("USER")
 DBPASSWORD = os.getenv("DBPASSWORD")
 
 
-def get_connection():
+def get_connection(user_id: int = None):
     """conexion nueva por cada request."""
+    from app.postgres_db import get_user_database
+
+    db_name = DATABASE
+    if user_id:
+        db_asignada = get_user_database(user_id)
+        if db_asignada:
+            db_name = db_asignada
 
     try:
-        # Primero conectar sin especificar base de datos
         conn = mysql.connector.connect(
             host=HOST,
             port=PORT,
             user=USER,
             password=DBPASSWORD,
+            database=db_name,
             charset="utf8",
             ssl_disabled=True,
             autocommit=True,
-            connect_timeout=10
+            connect_timeout=10,
         )
-
-        # Luego seleccionar la base de datos
-        cursor = conn.cursor()
-        cursor.execute(f"USE {DATABASE}")
-        cursor.close()
 
         yield conn
 
@@ -38,5 +40,5 @@ def get_connection():
         print(f"Error de conexión: {e}")
         raise e
     finally:
-        if 'conn' in locals() and conn.is_connected():
+        if "conn" in locals() and conn.is_connected():
             conn.close()

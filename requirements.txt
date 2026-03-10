@@ -7,3 +7,4 @@ PyJWT
 pytest
 httpx
 slowapi
+psycopg2-binary

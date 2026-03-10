@@ -1,0 +1,130 @@
+#Requerimiento 2
+**Arquitectura Externa:**
+
+Debido a restricciones en el servidor MySQL principal, la lógica de ruteo de bases de datos se gestionará a través de una base de datos PostgreSQL externa.
+
+El sistema debe realizar un lookup en PostgreSQL para obtener el nombre de la base de datos MySQL asociada al user_id.
+
+Este nombre de base de datos debe inyectarse dinámicamente en el pool de conexiones de MySQL para cada petición.
+
+Se debe ignorar cualquier configuración estática de nombre de base de datos en las variables de entorno para las peticiones de usuario.
+
+Eejemplo de codigo
+```python
+import psycopg2 # Para Postgres
+import mysql.connector # Para MySQL
+from fastapi import Depends, FastAPI
+
+# 1. Configuración de tu "Directorio Maestro" (Postgres)
+POSTGRES_MASTER = "postgresql://user:pass@remote_host:5432/master_db"
+
+def obtener_db_asignada(user_id: int):
+    # Conectamos a Postgres para saber qué BD le toca en MySQL
+    pg_conn = psycopg2.connect(POSTGRES_MASTER)
+    cursor = pg_conn.cursor()
+    cursor.execute("SELECT db_asignada FROM mapeo_usuarios WHERE user_id = %s", (user_id,))
+    resultado = cursor.fetchone()
+    pg_conn.close()
+    return resultado[0] if resultado else None
+
+# 2. El "Inyector" de conexión para tus endpoints
+def get_mysql_db(user_id: int): 
+    # En lugar de usar os.getenv("DB_NAME"), buscamos en Postgres
+    nombre_bd_real = obtener_db_asignada(user_id)
+    
+    if not nombre_bd_real:
+        raise Exception("Usuario no tiene base de datos asignada")
+
+    # Creamos la conexión a MySQL "inyectando" el nombre dinámico
+    conexion_mysql = mysql.connector.connect(
+        host="tu_servidor_mysql_unico",
+        user="usuario_app",
+        password="password_app",
+        database=nombre_bd_real # <--- Dinamismo total
+    )
+    try:
+        yield conexion_mysql
+    finally:
+        conexion_mysql.close()
+```
+
+
+Elaborar un plan de accion para lograr esto, sobre la arquitectura actual y propon una posible implementacion.
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------
+#Requerimiento 2 :
+
+**Sincronización entre Motores:**
+
+El sistema debe implementar una Background Task en el endpoint de Login que realice una sincronización unidireccional de IDs de usuario desde MySQL hacia la tabla mapeo_usuarios en PostgreSQL.
+
+Lógica: Si un user_id existe en MySQL pero no en PostgreSQL, debe insertarse automáticamente.
+
+Propósito: Garantizar que todos los usuarios habilitados estén disponibles en el Directorio Maestro de Postgres para que se les pueda asignar una base de datos específica.
+
+Restricción: No debe bloquear la respuesta del Login al usuario.
+
+
+## Ejemplo de codigo
+```python
+import psycopg2
+import mysql.connector
+from fastapi import BackgroundTasks, FastAPI
+
+# Configuración de conexiones
+PG_CONFIG = "dbname=master_db user=admin password=pass host=remote_pg"
+MYSQL_CONFIG = {"host": "mysql_srv", "user": "root", "password": "pass", "database": "admin_db"}
+
+def sincronizar_usuarios_maestros():
+    """
+    Compara IDs entre MySQL y Postgres. Si falta uno en Postgres, lo inserta.
+    """
+    try:
+        # 1. Obtener lista de IDs actuales de MySQL
+        conn_mysql = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor_mysql = conn_mysql.cursor()
+        cursor_mysql.execute("SELECT id, username FROM usuarios")
+        usuarios_mysql = cursor_mysql.fetchall() # Lista de (id, name)
+        conn_mysql.close()
+
+        # 2. Conectar a Postgres para actualizar
+        conn_pg = psycopg2.connect(PG_CONFIG)
+        cursor_pg = conn_pg.cursor()
+
+        for u_id, u_name in usuarios_mysql:
+            # Intentar insertar si no existe (ON CONFLICT DO NOTHING en Postgres)
+            sql_sync = """
+                INSERT INTO mapeo_usuarios (user_id, username) 
+                VALUES (%s, %s) 
+                ON CONFLICT (user_id) DO NOTHING;
+            """
+            cursor_pg.execute(sql_sync, (u_id, u_name))
+        
+        conn_pg.commit()
+        cursor_pg.close()
+        conn_pg.close()
+        print(" Sincronización de usuarios completada.")
+
+    except Exception as e:
+        print(f" Error en sincronización: {e}")
+
+@app.post("/login")
+async def login(user_credentials: dict, background_tasks: BackgroundTasks):
+    # 1. Validación normal de login contra MySQL
+    # ...
+    
+    # 2. Lanzar la sincronización en segundo plano
+    # Así el usuario entra rápido y el server actualiza Postgres "por detrás"
+    background_tasks.add_task(sincronizar_usuarios_maestros)
+
+    return {"message": "Login exitoso", "token": "JWT_CON_DB_INYECTADA"}
+
+
+
+```

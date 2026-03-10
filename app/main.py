@@ -1,13 +1,12 @@
 from fastapi import FastAPI, Request
 from app.routers import clientes, pagos, usuarios, auth, admin
 from datetime import datetime
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from app.limiter import limiter
 
 # Configurar Limiter (por IP del cliente)
 # Límite global por defecto: 100 peticiones por minuto
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 app = FastAPI(
     title="Sistema de Cobros",

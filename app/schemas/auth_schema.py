@@ -13,3 +13,4 @@ class LoginResponse(BaseModel):
     access_token: str
     token_type: str
     message: str
+    user_db: str | None

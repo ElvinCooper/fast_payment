@@ -1,20 +1,22 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
-from app.schemas.cliente_schema import ClienteResponse, ParamNombre, CuotaVencidaResponse
+from app.schemas.cliente_schema import (
+    ClienteResponse,
+    ParamNombre,
+    CuotaVencidaResponse,
+)
 from typing import List
-from app.database import get_connection
-from app.auth_utils import get_current_user
+from app.auth_utils import get_user_connection
 from mysql.connector import MySQLConnection
 from datetime import datetime
 
 router = APIRouter(
     prefix="/api/v1/clientes",
     tags=["Clientes"],
-    dependencies=[Depends(get_current_user)],
 )
 
 
 @router.get("/", response_model=List[ClienteResponse])
-def obtener_clientes(conn: MySQLConnection = Depends(get_connection)):
+def obtener_clientes(conn: MySQLConnection = Depends(get_user_connection)):
     """Obtener todos los clientes con prestamos activos"""
     cursor = conn.cursor(dictionary=True)
 
@@ -44,17 +46,17 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_connection)):
 
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     for r in results:
-        r["fecha"] = now        
+        r["fecha"] = now
 
     return results
 
 
 @router.get("/cuotas/vencidas", response_model=List[CuotaVencidaResponse])
-def listado_cuotas_vencidas(conn: MySQLConnection =  Depends(get_connection)):
-    """ Listar los clientes con cuotas vencidas en el sistema """
+def listado_cuotas_vencidas(conn: MySQLConnection = Depends(get_user_connection)):
+    """Listar los clientes con cuotas vencidas en el sistema"""
     cursor = conn.cursor(dictionary=True)
-    
-    query= """
+
+    query = """
             SELECT  P.NPRESTAMO,
             P.CODIGO,
             P.CLIENTE ,
@@ -71,21 +73,29 @@ def listado_cuotas_vencidas(conn: MySQLConnection =  Depends(get_connection)):
             GROUP BY G.nprestamo
             ORDER BY P.cliente
         """
-        
-    cursor.execute(query,)  
-    resultado = cursor.fetchall() 
+
+    cursor.execute(
+        query,
+    )
+    resultado = cursor.fetchall()
     cursor.close()
-    
+
     if not resultado:
         raise HTTPException(
-            status_code=404, detail="No se encontraron clientes con cuotas vencidas")
+            status_code=404, detail="No se encontraron clientes con cuotas vencidas"
+        )
 
     return resultado
-    
-        
 
-@router.get("/buscar", response_model=List[ClienteResponse],)
-def buscar_clientes_por_nombre(params: ParamNombre = Depends(), conn: MySQLConnection = Depends(get_connection),):
+
+@router.get(
+    "/buscar",
+    response_model=List[ClienteResponse],
+)
+def buscar_clientes_por_nombre(
+    params: ParamNombre = Depends(),
+    conn: MySQLConnection = Depends(get_user_connection),
+):
     """Buscar clientes por nombre)"""
     cursor = conn.cursor(dictionary=True)
 
@@ -122,7 +132,7 @@ def buscar_clientes_por_nombre(params: ParamNombre = Depends(), conn: MySQLConne
 
 
 @router.get("/{id}", response_model=List[ClienteResponse])
-def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_connection)):
+def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_user_connection)):
     """Obtener cliente por su id"""
     cursor = conn.cursor(dictionary=True)
 
