@@ -34,6 +34,8 @@ class ClienteResponse(BaseModel):
     nprestamo: int
     vprestamo: Decimal = Field(max_digits=10, decimal_places=2)
     fecha: Optional[str] = None
+    estado_cuota: Optional[str] = None
+
 
     @field_validator("CLIENTE", mode="before")
     @classmethod
@@ -41,3 +43,16 @@ class ClienteResponse(BaseModel):
         if v is None:
             return v
         return v.strip() if isinstance(v, str) else v
+    
+    
+    
+class CuotaVencidaResponse(BaseModel):
+      NPRESTAMO: int
+      CODIGO: int
+      CLIENTE: str
+      FECHAP: datetime  
+      fechav: datetime  
+      cel: str
+      ncuotas: int
+      vpendiente: Decimal = Field(max_digits=10, decimal_places=2)
+      estado_cuota: str = "con cuota vencida"  # Campo por default

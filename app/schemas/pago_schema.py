@@ -6,8 +6,7 @@ class PagoRequest(BaseModel):
     idcliente: int
     cliente_nombre: str = Field(min_length=3, max_length=45)
     monto: Decimal = Field(max_digits=10, decimal_places=2)
-    idusuario: int
-    #nota: str | None = Field(max_length=30)
+    idusuario: int    
     usuario_nombre: str 
     
     @field_validator('cliente_nombre', 'usuario_nombre', mode='before')
