@@ -44,40 +44,20 @@ def asignar_acceso(
     conn: MySQLConnection = Depends(get_connection),
 ):
     """Asignar BD y clave a un usuario"""
+    from app.postgres_db import asignar_db_usuario
+    
     cursor = conn.cursor()
-
-    # Verificar si el usuario existe
     cursor.execute(
         "SELECT idusuario FROM usuario WHERE idusuario = %s", (user_data.idusuario,)
     )
     user_exists = cursor.fetchone()
-
-    if not user_exists:
-        cursor.close()
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    # actualizar campos del usuario indicado
-    query = """
-       UPDATE usuario
-       SET `database` = %s,
-           clave = %s
-       WHERE idusuario = %s
-    """
-
-    cursor.execute(
-        query,
-        (
-            user_data.database,
-            user_data.clave,
-            user_data.idusuario,
-        ),
-    )
-    conn.commit()
     cursor.close()
-
-    return HTTPException(
-        status_code=200, detail={"message": "Usuario actualizado exitosamente"}
-    )
+    if not user_exists:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    rows = asignar_db_usuario(user_data.idusuario, user_data.database, user_data.clave)
+    if rows == 0:
+        raise HTTPException(status_code=404, detail="Usuario no existe en mapeo_usuarios")
+    return {"message": "Usuario actualizado exitosamente"}
 
 
 @router.get("/server/databases")

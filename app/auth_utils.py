@@ -12,7 +12,7 @@ load_dotenv()
 # Configuración JWT
 SECRET_KEY = os.getenv("SECRET_KEY", "tu_clave_secreta_super_segura_aqui")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_HOURS = 2
 
 # Esquema de seguridad para Swagger
 security = HTTPBearer()

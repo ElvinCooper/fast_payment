@@ -9,7 +9,7 @@ from app.limiter import limiter
 # Límite global por defecto: 100 peticiones por minuto
 
 app = FastAPI(
-    title="Sistema de Cobros",
+    title="Sistema de Pagos BioCamila",
     description="Backend para gestión de cobros y pagos de clientes (Protegido con JWT y Rate Limit)",
     version="1.0.0",
 )

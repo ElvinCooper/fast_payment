@@ -47,12 +47,31 @@ def sincronizar_usuarios():
     for u_id, u_name in usuarios:
         cursor.execute(
             """
-            INSERT INTO mapeo_usuarios (user_id, username) 
+            INSERT INTO mapeo_usuarios (idusuario, usuario) 
             VALUES (%s, %s) 
-            ON CONFLICT (user_id) DO NOTHING
+            ON CONFLICT (idusuario) DO NOTHING
         """,
             (u_id, u_name),
         )
     pg_conn.commit()
     cursor.close()
     pg_conn.close()
+
+
+def asignar_db_usuario(user_id: int, database: str, clave: str):
+    """Asigna la base de datos y clave a un usuario en PostgreSQL"""
+    pg_conn = get_pg_connection()
+    cursor = pg_conn.cursor()
+    cursor.execute(
+        """
+        UPDATE mapeo_usuarios 
+        SET db_asignada = %s, clave = %s
+        WHERE idusuario = %s
+        """,
+        (database, clave, user_id),
+    )
+    pg_conn.commit()
+    rows_affected = cursor.rowcount
+    cursor.close()
+    pg_conn.close()
+    return rows_affected
