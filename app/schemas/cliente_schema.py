@@ -33,8 +33,9 @@ class ClienteResponse(BaseModel):
     CLIENTE: Optional[NombreSinNumeros]
     nprestamo: int
     vprestamo: Decimal = Field(max_digits=10, decimal_places=2)
-    fecha: Optional[str] = None
     estado_cuota: Optional[str] = None
+    cantidad_cutas: int
+    vpendiente: Decimal = Field(max_digits=10, decimal_places=2)
 
 
     @field_validator("CLIENTE", mode="before")

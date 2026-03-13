@@ -22,16 +22,26 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_user_connection)):
 
     query = """
         SELECT
-        CL.idcliente,
-        CL.CLIENTE,
-        PR.nprestamo,
-        PR.vprestamo,
-        CASE
-           WHEN PR.pagado = 0 THEN 'con cuota vencida' 
-            ELSE 'sin cuota vencida'
-        END AS estado_cuota
+            CL.idcliente,
+            CL.CLIENTE,
+            PR.nprestamo,
+            PR.vprestamo,
+            CASE
+                WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida' END AS estado_cuota,
+            IFNULL(CV.cantidad_cutas, 0)     AS cantidad_cutas,
+            IFNULL(CV.vpendiente, 0)  AS vpendiente
         FROM cliente CL
         JOIN prestamo PR ON CL.idcliente = PR.codigo
+        LEFT JOIN (
+            SELECT
+                G.nprestamo,
+                COUNT(G.ncuotas) as cantidad_cutas,
+                SUM(IFNULL(G.vpendiente, 0)) AS vpendiente
+            FROM pagos G
+            WHERE G.fechaven <= SYSDATE()
+            AND G.estatus = 0
+            GROUP BY G.nprestamo) CV ON PR.nprestamo = CV.nprestamo
+        ORDER BY pr.CLIENTE   
         """
     cursor.execute(
         query,
@@ -108,12 +118,24 @@ def buscar_clientes_por_nombre(
        CASE
            WHEN PR.pagado = 0 THEN 'con cuota vencida'
            ELSE 'sin cuota vencida'
-       END AS estado_cuota
+       END AS estado_cuota,
+       IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
+       IFNULL(CV.vpendiente, 0) AS vpendiente
        FROM cliente CL
        JOIN prestamo PR ON CL.idcliente = PR.CODIGO
+       LEFT JOIN (
+           SELECT
+               G.nprestamo,
+               COUNT(G.ncuotas) as cantidad_cutas,
+               SUM(IFNULL(G.vpendiente, 0)) AS vpendiente
+           FROM pagos G
+           WHERE G.fechaven <= SYSDATE()
+           AND G.estatus = 0
+           GROUP BY G.nprestamo
+       ) CV ON PR.nprestamo = CV.nprestamo
        WHERE CL.CLIENTE LIKE %s AND CL.CLIENTE IS NOT NULL
        LIMIT 20;
-        """
+         """
 
     cursor.execute(query, (f"%{params.CLIENTE}%",))
     resultados = cursor.fetchall()
@@ -143,9 +165,21 @@ def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_user_connec
                PR.vprestamo,
                CASE 
                 WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida'
-               END AS estado_cuota 
+               END AS estado_cuota,
+               IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
+               IFNULL(CV.vpendiente, 0) AS vpendiente
         FROM cliente CL
         JOIN prestamo PR ON CL.idcliente = PR.CODIGO
+        LEFT JOIN (
+            SELECT
+                G.nprestamo,
+                COUNT(G.ncuotas) as cantidad_cutas,
+                SUM(IFNULL(G.vpendiente, 0)) AS vpendiente
+            FROM pagos G
+            WHERE G.fechaven <= SYSDATE()
+            AND G.estatus = 0
+            GROUP BY G.nprestamo
+        ) CV ON PR.nprestamo = CV.nprestamo
         WHERE CL.idcliente = %s
     """
     cursor.execute(query, (id,))
