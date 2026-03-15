@@ -26,6 +26,9 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_user_connection)):
             CL.CLIENTE,
             PR.nprestamo,
             PR.vprestamo,
+            PR.FECHAP,
+            PR.fechav,
+            PR.cel,
             CASE
                 WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida' END AS estado_cuota,
             IFNULL(CV.cantidad_cutas, 0)     AS cantidad_cutas,
@@ -115,6 +118,9 @@ def buscar_clientes_por_nombre(
        CL.CLIENTE,
        PR.nprestamo,
        PR.vprestamo,
+       PR.FECHAP,
+       PR.fechav,
+       PR.cel,
        CASE
            WHEN PR.pagado = 0 THEN 'con cuota vencida'
            ELSE 'sin cuota vencida'
@@ -163,6 +169,9 @@ def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_user_connec
                CL.CLIENTE,
                PR.nprestamo,
                PR.vprestamo,
+               PR.FECHAP,
+               PR.fechav,
+               PR.cel,
                CASE 
                 WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida'
                END AS estado_cuota,
