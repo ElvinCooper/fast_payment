@@ -60,6 +60,10 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_user_connection)):
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     for r in results:
         r["fecha"] = now
+        if r.get("FECHAP"):
+            r["FECHAP"] = r["FECHAP"].strftime("%d-%m-%Y")
+        if r.get("fechav"):
+            r["fechav"] = r["fechav"].strftime("%d-%m-%Y")
 
     return results
 
@@ -155,6 +159,10 @@ def buscar_clientes_por_nombre(
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     for r in resultados:
         r["fecha"] = now
+        if r.get("FECHAP"):
+            r["FECHAP"] = r["FECHAP"].strftime("%d-%m-%Y")
+        if r.get("fechav"):
+            r["fechav"] = r["fechav"].strftime("%d-%m-%Y")
 
     return resultados
 
@@ -203,5 +211,9 @@ def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_user_connec
     now = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
     for r in results:
         r["fecha"] = now
+        if r.get("FECHAP"):
+            r["FECHAP"] = r["FECHAP"].strftime("%d-%m-%Y")
+        if r.get("fechav"):
+            r["fechav"] = r["fechav"].strftime("%d-%m-%Y")
 
     return results

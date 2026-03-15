@@ -33,8 +33,8 @@ class ClienteResponse(BaseModel):
     CLIENTE: Optional[NombreSinNumeros]
     nprestamo: int
     vprestamo: Decimal = Field(max_digits=10, decimal_places=2)
-    FECHAP: Optional[datetime] = None
-    fechav: Optional[datetime] = None
+    FECHAP: Optional[str] = None
+    fechav: Optional[str] = None
     cel: Optional[str] = None
     estado_cuota: Optional[str] = None
     cantidad_cutas: int
