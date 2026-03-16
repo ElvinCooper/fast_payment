@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body
 from app.schemas.routing_schema import UserDBRoutingResponse, UserDBRoutingUpdate
 from app.database import get_connection
 from app.auth_utils import get_current_user
@@ -21,7 +21,7 @@ router = APIRouter(
 
 
 @router.get("/users", response_model=List[UserDBRoutingResponse])
-def get_all_acces(
+def system_users(
     current_user: dict = Depends(get_current_user),
     conn: MySQLConnection = Depends(get_connection),
 ):
@@ -39,13 +39,13 @@ def get_all_acces(
 
 @router.put("/user/routing")
 def asignar_acceso(
-    user_data: UserDBRoutingUpdate,
+    user_data: UserDBRoutingUpdate = Body(...),
     current_user: dict = Depends(get_current_user),
     conn: MySQLConnection = Depends(get_connection),
 ):
     """Asignar BD y clave a un usuario"""
     from app.postgres_db import asignar_db_usuario
-    
+
     cursor = conn.cursor()
     cursor.execute(
         "SELECT idusuario FROM usuario WHERE idusuario = %s", (user_data.idusuario,)
@@ -56,7 +56,9 @@ def asignar_acceso(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     rows = asignar_db_usuario(user_data.idusuario, user_data.database, user_data.clave)
     if rows == 0:
-        raise HTTPException(status_code=404, detail="Usuario no existe en mapeo_usuarios")
+        raise HTTPException(
+            status_code=404, detail="Usuario no existe en mapeo_usuarios"
+        )
     return {"message": "Usuario actualizado exitosamente"}
 
 

@@ -3,13 +3,12 @@ from typing import Optional
 from datetime import datetime
 
 
- 
 class UserDBRoutingResponse(BaseModel):
     idusuario: int
-    usuario: str    
+    usuario: str
 
 
 class UserDBRoutingUpdate(BaseModel):
-    idusuario: int    
-    database: str | None = Field(..., max_length=100)
-    clave:   str | None   = Field(..., max_length=30)
+    idusuario: int
+    database: str = Field(..., max_length=100)
+    clave: str = Field(..., max_length=30)
