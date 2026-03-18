@@ -65,6 +65,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Initialize PostgreSQL database
+        run: |
+          pip install psycopg2-binary
+          PGPASSWORD=postgres psql -h localhost -U postgres -d neondb -f scripts/init_postgres.sql
+
       - name: Run lint
         run: |
           pip install ruff
