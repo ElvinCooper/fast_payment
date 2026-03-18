@@ -94,11 +94,14 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 
 def get_user_connection(current_user: dict = Depends(get_current_user)):
-    """Dependencia que combina autenticación con conexión dinámica a BD del usuario"""
-    from app.database import get_connection as get_db
+    """Dependencia que combina autenticación con conexión dinámica a BD del usuario.
 
-    user_id = current_user.get("id")
-    yield from get_db(user_id=user_id)
+    Extrae el user_id del token y conecta a la BD asignada en mapeo_usuarios.
+    """
+    from app.database import get_connection
+
+    user_id = current_user.get("idusuario")
+    yield from get_connection(user_id=user_id)
 
 
 def get_db_connection(user: dict = Depends(get_current_user)):

@@ -75,3 +75,47 @@ class TestUserConnectionRouting:
 
         assert "user_id" in params
         assert sig.parameters["user_id"].default is None
+
+    def test_get_connection_con_db_asignada(self):
+        """Verifica que conecta a la BD asignada del usuario"""
+        with (
+            patch("app.postgres_db.get_user_database") as mock_get_db,
+            patch("mysql.connector.connect") as mock_mysql,
+        ):
+            mock_conn = MagicMock()
+            mock_mysql.return_value = mock_conn
+            mock_get_db.return_value = "finanzas_cliente_a"
+
+            conn = next(get_connection(user_id=5))
+
+            mock_get_db.assert_called_once_with(5)
+            mock_mysql.assert_called_once()
+            call_kwargs = mock_mysql.call_args.kwargs
+            assert call_kwargs["database"] == "finanzas_cliente_a"
+
+    def test_get_connection_sin_db_asignada(self):
+        """Verifica que usa BD default cuando no hay db_asignada"""
+        with (
+            patch("app.postgres_db.get_user_database") as mock_get_db,
+            patch("mysql.connector.connect") as mock_mysql,
+        ):
+            mock_conn = MagicMock()
+            mock_mysql.return_value = mock_conn
+            mock_get_db.return_value = None
+
+            conn = next(get_connection(user_id=5))
+
+            mock_get_db.assert_called_once_with(5)
+            call_kwargs = mock_mysql.call_args.kwargs
+            assert call_kwargs["database"] == "finanzasprueba"
+
+    def test_get_connection_sin_user_id(self):
+        """Verifica que usa BD default cuando no hay user_id"""
+        with patch("mysql.connector.connect") as mock_mysql:
+            mock_conn = MagicMock()
+            mock_mysql.return_value = mock_conn
+
+            conn = next(get_connection())
+
+            call_kwargs = mock_mysql.call_args.kwargs
+            assert call_kwargs["database"] == "finanzasprueba"
