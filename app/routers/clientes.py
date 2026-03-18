@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.cliente_schema import (
     ClienteResponse,
     ParamNombre,

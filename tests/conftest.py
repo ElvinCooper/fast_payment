@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 from app.main import app
 from app.database import get_connection
-from app.auth_utils import get_current_user, get_user_connection
+from app.auth_utils import get_user_connection
 
 
 @pytest.fixture

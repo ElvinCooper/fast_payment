@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import os
 import mysql.connector
-from typing import Optional
 import uuid
 
 load_dotenv()
