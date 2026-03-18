@@ -1,9 +1,5 @@
-import pytest
 from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
-from app.main import app
 from app.database import get_connection
-from app.auth_utils import get_current_user, get_user_connection
 from app.postgres_db import get_user_database, sincronizar_usuarios
 
 
@@ -73,7 +69,6 @@ class TestUserConnectionRouting:
     def test_get_connection_acepta_user_id(self):
         """Verifica que get_connection acepta user_id como parámetro"""
         import inspect
-        from app.database import get_connection
 
         sig = inspect.signature(get_connection)
         params = list(sig.parameters.keys())

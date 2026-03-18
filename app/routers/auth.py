@@ -41,7 +41,7 @@ def login(
         "idusuario": user["idusuario"],
         "usuario": user["usuario"],
         "access_token": access_token,
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec: B105 - Estándar OAuth2
         "message": "Login exitoso",
         "user_db": user_db,
     }

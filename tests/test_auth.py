@@ -1,6 +1,4 @@
-import pytest
 from unittest.mock import patch
-from app.auth_utils import create_access_token
 
 
 def test_login_success(client, mock_db_conn, mock_pg_conn):
@@ -14,7 +12,7 @@ def test_login_success(client, mock_db_conn, mock_pg_conn):
         mock_get_db.return_value = "finanzas_test"
 
         # Mock para sincronizar_usuarios
-        with patch("app.routers.auth.sincronizar_usuarios") as mock_sync:
+        with patch("app.routers.auth.sincronizar_usuarios"):
             response = client.post(
                 "/api/v1/auth/login",
                 json={"usuario": "testuser", "password": "correct_clave"},
@@ -35,7 +33,7 @@ def test_login_failure(client, mock_db_conn, mock_pg_conn):
     mock_cursor.fetchone.return_value = None
 
     with (
-        patch("app.routers.auth.get_user_database") as mock_get_db,
+        patch("app.routers.auth.get_user_database", return_value=None),
         patch("app.routers.auth.sincronizar_usuarios"),
     ):
         response = client.post(
