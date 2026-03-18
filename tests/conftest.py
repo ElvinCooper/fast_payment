@@ -36,6 +36,13 @@ def mock_pg_conn():
 
 
 @pytest.fixture
+def mock_token_not_revoked():
+    """Fixture para mockear que el token no está revocado"""
+    with patch("app.auth_utils.is_token_revoked", return_value=False):
+        yield
+
+
+@pytest.fixture
 def mock_user_connection():
     """Fixture para mockear la conexión de usuario con routing"""
     mock_conn = MagicMock()

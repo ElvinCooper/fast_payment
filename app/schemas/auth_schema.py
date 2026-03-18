@@ -14,3 +14,9 @@ class LoginResponse(BaseModel):
     token_type: str
     message: str
     user_db: str | None
+
+
+class TokenRefreshResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"

@@ -71,7 +71,7 @@ def get_server_databases(
 
     # Validar que el usuario sea administrador
     admin_user_ids = [1, 2, 3]
-    if current_user.get("id") not in admin_user_ids:
+    if current_user.get("idusuario") not in admin_user_ids:
         raise HTTPException(
             status_code=403,
             detail="Acceso denegado. Solo administradores pueden acceder a esta función",

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 import mysql.connector
 from typing import Optional
+import uuid
 
 load_dotenv()
 
@@ -21,9 +22,37 @@ security = HTTPBearer()
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    to_encode.update({"exp": expire})
+    jti = str(uuid.uuid4())
+    to_encode.update({"exp": expire, "jti": jti})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+
+def create_refresh_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    jti = str(uuid.uuid4())
+    to_encode.update({"exp": expire, "jti": jti, "type": "refresh"})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def is_token_revoked(jti: str) -> bool:
+    """Verifica si el token ha sido revocado consultando PostgreSQL"""
+    from app.postgres_db import get_pg_connection
+
+    conn = get_pg_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM token_blocklist WHERE jti = %s", (jti,))
+        result = cursor.fetchone()
+        cursor.close()
+        return result is not None
+    finally:
+        conn.close()
 
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -33,6 +62,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("id")
         user_name: str = payload.get("sub")
+        jti: str = payload.get("jti")
 
         if user_id is None or user_name is None:
             raise HTTPException(
@@ -40,7 +70,15 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
                 detail="Token inválido: faltan datos del usuario",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return {"id": user_id, "username": user_name}
+
+        # Verificar si el token está revocado
+        if is_token_revoked(jti):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token ha sido revocado",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return {"idusuario": user_id, "username": user_name, "jti": payload.get("jti")}
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(

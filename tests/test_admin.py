@@ -109,7 +109,10 @@ def test_get_server_databases_no_admin(client, non_admin_auth_header, mock_db_co
 def test_get_server_databases_success(client, admin_auth_header, mock_db_conn):
     mock_conn, mock_cursor = mock_db_conn
 
-    with patch("mysql.connector.connect") as mock_mysql_conn:
+    with (
+        patch("mysql.connector.connect") as mock_mysql_conn,
+        patch("app.auth_utils.is_token_revoked", return_value=False),
+    ):
         mock_mysql_conn.return_value.__enter__ = MagicMock(
             return_value=mock_mysql_conn.return_value
         )
@@ -143,7 +146,10 @@ def test_get_server_databases_error_conexion(client, admin_auth_header, mock_db_
 
     import mysql.connector
 
-    with patch("mysql.connector.connect") as mock_mysql_conn:
+    with (
+        patch("mysql.connector.connect") as mock_mysql_conn,
+        patch("app.auth_utils.is_token_revoked", return_value=False),
+    ):
         mock_mysql_conn.side_effect = mysql.connector.Error("Connection refused")
 
         response = client.get(
