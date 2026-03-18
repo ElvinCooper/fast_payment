@@ -1,8 +1,25 @@
-venv/
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*$py.class
+
+
+
+.coverage
+cov_annotate
 .env
-.venv
+venv/
+env/
+
+# Archivos de logs
 *.log
 
-.vercel
+# Configuración de editor
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.swp

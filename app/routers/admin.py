@@ -29,7 +29,7 @@ def system_users(
 
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT idusuario, usuario FROM usuario WHERE idusuario not in (1, 2) ORDER BY idusuario"
+        "SELECT idusuario, usuario FROM usuario WHERE idusuario not in (1, 2, 3) ORDER BY idusuario"
     )
     results = cursor.fetchall()
     cursor.close()
