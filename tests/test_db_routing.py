@@ -86,7 +86,7 @@ class TestUserConnectionRouting:
             mock_mysql.return_value = mock_conn
             mock_get_db.return_value = "finanzas_cliente_a"
 
-            conn = next(get_connection(user_id=5))
+            next(get_connection(user_id=5))
 
             mock_get_db.assert_called_once_with(5)
             mock_mysql.assert_called_once()
@@ -103,7 +103,7 @@ class TestUserConnectionRouting:
             mock_mysql.return_value = mock_conn
             mock_get_db.return_value = None
 
-            conn = next(get_connection(user_id=5))
+            next(get_connection(user_id=5))
 
             mock_get_db.assert_called_once_with(5)
             call_kwargs = mock_mysql.call_args.kwargs
@@ -115,7 +115,7 @@ class TestUserConnectionRouting:
             mock_conn = MagicMock()
             mock_mysql.return_value = mock_conn
 
-            conn = next(get_connection())
+            next(get_connection())
 
             call_kwargs = mock_mysql.call_args.kwargs
             assert call_kwargs["database"] == "finanzasprueba"
