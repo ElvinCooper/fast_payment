@@ -62,6 +62,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         user_id: str = payload.get("id")
         user_name: str = payload.get("sub")
         jti: str = payload.get("jti")
+        db_asignada = payload.get("db_asignada")
 
         if user_id is None or user_name is None:
             raise HTTPException(
@@ -77,7 +78,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
                 detail="Token ha sido revocado",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return {"idusuario": user_id, "username": user_name, "jti": payload.get("jti")}
+        return {"idusuario": user_id, "username": user_name, "jti": payload.get("jti"), "db_asignada": db_asignada}
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(

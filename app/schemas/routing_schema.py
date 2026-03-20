@@ -8,5 +8,5 @@ class UserDBRoutingResponse(BaseModel):
 
 class UserDBRoutingUpdate(BaseModel):
     idusuario: int
-    database: str = Field(..., max_length=100)
-    clave: str = Field(..., max_length=30)
+    database: str = Field(max_length=100)
+    clave: str    = Field(max_length=30)

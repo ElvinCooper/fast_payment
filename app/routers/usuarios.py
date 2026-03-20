@@ -37,7 +37,7 @@ def obtener_usuarios(conn: MySQLConnection = Depends(get_user_connection)):
 @router.get("/me", response_model=UserBase)
 def obtener_usuario_actual(current_user: dict = Depends(get_current_user)):
     """Obtener el usuario autenticado actual"""
-    return {"idusuario": current_user["idusuario"], "usuario": current_user["username"]}
+    return {"idusuario": current_user["idusuario"], "usuario": current_user["username"], "db_asignada": current_user["db_asignada"]}
 
 
 @router.post("/logout")

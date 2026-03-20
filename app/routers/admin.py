@@ -41,8 +41,13 @@ def system_users(
 def asignar_acceso(
     user_data: UserDBRoutingUpdate = Body(...),
     current_user: dict = Depends(get_current_user),
-    conn: MySQLConnection = Depends(get_connection),
-):
+    conn: MySQLConnection = Depends(get_connection),):
+    
+    # Validar que el usuario sea administrador
+    admin_user_ids = [1, 2, 3]
+    if current_user.get("idusuario") not in admin_user_ids:
+        raise HTTPException( status_code=403, detail="Acceso denegado. Solo administradores pueden acceder a esta función",)
+        
     """Asignar BD y clave a un usuario"""
     from app.postgres_db import asignar_db_usuario
 

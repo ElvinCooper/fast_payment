@@ -2,6 +2,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 import os
+from app.database import HOST, PORT, USER, DBPASSWORD, DATABASE
+import mysql.connector  
 
 load_dotenv()
 
@@ -25,9 +27,7 @@ def get_user_database(user_id: int) -> str:
         conn.close()
 
 
-def sincronizar_usuarios():
-    import mysql.connector
-    from app.database import HOST, PORT, USER, DBPASSWORD, DATABASE
+def sincronizar_usuarios():  
 
     mysql_conn = mysql.connector.connect(
         host=HOST,
@@ -49,7 +49,7 @@ def sincronizar_usuarios():
             """
             INSERT INTO mapeo_usuarios (idusuario, usuario) 
             VALUES (%s, %s) 
-            ON CONFLICT (idusuario) DO NOTHING
+            ON CONFLICT (idusuario) DO UPDATE SET usuario = EXCLUDED.usuario
         """,
             (u_id, u_name),
         )
@@ -59,7 +59,9 @@ def sincronizar_usuarios():
 
 
 def asignar_db_usuario(user_id: int, database: str, clave: str):
-    """Asigna la base de datos y clave a un usuario en PostgreSQL"""
+    """Asigna la base de datos y clave a un usuario en PostgreSQL y MySQL"""
+    
+    # actualizar en psotgresql
     pg_conn = get_pg_connection()
     cursor = pg_conn.cursor()
     cursor.execute(
@@ -71,7 +73,28 @@ def asignar_db_usuario(user_id: int, database: str, clave: str):
         (database, clave, user_id),
     )
     pg_conn.commit()
-    rows_affected = cursor.rowcount
+    pg_rows_affected = cursor.rowcount
     cursor.close()
     pg_conn.close()
-    return rows_affected
+    
+    # actualizar en MySQL
+    mysql_conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database=DATABASE,
+        charset='utf8'
+    )
+    cursor = mysql_conn.cursor()
+    cursor.execute("""UPDATE usuario
+                    SET clave = %s
+                    WHERE idusuario = %s""",
+                    (clave, user_id),
+    )
+    mysql_conn.commit() 
+    mysql_rows_affected = cursor.rowcount   
+    cursor.close()
+    mysql_conn.close()
+    
+    return f"Postgresql: {pg_rows_affected} MySQL: {mysql_rows_affected}"
