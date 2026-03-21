@@ -1,0 +1,2 @@
+bandit==1.9.4
+stevedore==5.7.0
