@@ -28,13 +28,32 @@ def test_get_users_success(client, admin_auth_header, mock_db_conn):
         {"idusuario": 4, "usuario": "anotheruser"},
     ]
 
-    response = client.get("/api/v1/admin/users", headers=admin_auth_header)
+    with patch("app.postgres_db.get_all_user_databases") as mock_get_dbs:
+        mock_get_dbs.return_value = {
+            3: "finanzas_test",
+            4: None,
+        }
 
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 2
-    assert data[0]["idusuario"] == 3
-    assert data[0]["usuario"] == "testuser"
+        response = client.get("/api/v1/admin/users", headers=admin_auth_header)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["usuario"] == "testuser"
+        assert data[0]["db_asignada"] == "finanzas_test"
+        assert data[1]["usuario"] == "anotheruser"
+        assert data[1]["db_asignada"] is None
+
+
+def test_get_users_empty(client, admin_auth_header, mock_db_conn):
+    mock_conn, mock_cursor = mock_db_conn
+    mock_cursor.fetchall.return_value = []
+
+    with patch("app.postgres_db.get_all_user_databases", return_value={}):
+        response = client.get("/api/v1/admin/users", headers=admin_auth_header)
+
+        assert response.status_code == 200
+        assert response.json() == []
 
 
 def test_asignar_acceso_sin_auth(client):
@@ -65,7 +84,9 @@ def test_asignar_acceso_no_existe_en_mapeo(client, admin_auth_header, mock_db_co
 
     mock_cursor.fetchone.return_value = (3,)
 
-    with patch("app.postgres_db.asignar_db_usuario", return_value=0):
+    with patch(
+        "app.postgres_db.asignar_db_usuario", return_value="Postgresql: 0 MySQL: 0"
+    ):
         response = client.put(
             "/api/v1/admin/user/routing",
             json={"idusuario": 3, "database": "testdb", "clave": "testkey"},
@@ -81,7 +102,9 @@ def test_asignar_acceso_success(client, admin_auth_header, mock_db_conn):
 
     mock_cursor.fetchone.return_value = (3,)
 
-    with patch("app.postgres_db.asignar_db_usuario", return_value=1):
+    with patch(
+        "app.postgres_db.asignar_db_usuario", return_value="Postgresql: 1 MySQL: 1"
+    ):
         response = client.put(
             "/api/v1/admin/user/routing",
             json={"idusuario": 3, "database": "testdb", "clave": "testkey"},

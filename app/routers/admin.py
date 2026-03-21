@@ -1,9 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
-from app.schemas.routing_schema import UserDBRoutingResponse, UserDBRoutingUpdate
+from app.schemas.routing_schema import UserDBRoutingUpdate
 from app.database import get_connection
 from app.auth_utils import get_current_user
 from mysql.connector import MySQLConnection
-from typing import List
 import mysql.connector
 from dotenv import load_dotenv
 import os
@@ -20,12 +19,14 @@ router = APIRouter(
 )
 
 
-@router.get("/users", response_model=List[UserDBRoutingResponse])
+@router.get("/users")
 def system_users(
     current_user: dict = Depends(get_current_user),
     conn: MySQLConnection = Depends(get_connection),
 ):
     """Lista usuarios con acceso al sistema"""
+
+    from app.postgres_db import get_all_user_databases
 
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
@@ -34,22 +35,33 @@ def system_users(
     results = cursor.fetchall()
     cursor.close()
 
-    return results
+    user_dbs = get_all_user_databases()
+
+    return [
+        {"usuario": user["usuario"], "db_asignada": user_dbs.get(user["idusuario"])}
+        for user in results
+    ]
 
 
 @router.put("/user/routing")
 def asignar_acceso(
     user_data: UserDBRoutingUpdate = Body(...),
     current_user: dict = Depends(get_current_user),
-    conn: MySQLConnection = Depends(get_connection),):
-    
+    conn: MySQLConnection = Depends(get_connection),
+):
     # Validar que el usuario sea administrador
     admin_user_ids = [1, 2, 3]
     if current_user.get("idusuario") not in admin_user_ids:
-        raise HTTPException( status_code=403, detail="Acceso denegado. Solo administradores pueden acceder a esta función",)
-        
-    """Asignar BD y clave a un usuario"""
-    from app.postgres_db import asignar_db_usuario
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso denegado. Solo administradores pueden acceder a esta función",
+        )
+
+    # Validar que se envió al menos un campo
+    if user_data.database is None and user_data.clave is None:
+        raise HTTPException(
+            status_code=400, detail="Debe enviar al menos 'database' o 'clave'"
+        )
 
     cursor = conn.cursor()
     cursor.execute(
@@ -59,11 +71,18 @@ def asignar_acceso(
     cursor.close()
     if not user_exists:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    rows = asignar_db_usuario(user_data.idusuario, user_data.database, user_data.clave)
-    if rows == 0:
+
+    from app.postgres_db import asignar_db_usuario
+
+    result = asignar_db_usuario(
+        user_data.idusuario, user_data.database, user_data.clave
+    )
+
+    if user_data.database is not None and "Postgresql: 0" in str(result):
         raise HTTPException(
             status_code=404, detail="Usuario no existe en mapeo_usuarios"
         )
+
     return {"message": "Usuario actualizado exitosamente"}
 
 

@@ -1,6 +1,10 @@
 from unittest.mock import patch, MagicMock
 from app.database import get_connection
-from app.postgres_db import get_user_database, sincronizar_usuarios
+from app.postgres_db import (
+    get_user_database,
+    sincronizar_usuarios,
+    get_all_user_databases,
+)
 
 
 class TestGetUserDatabase:
@@ -75,3 +79,44 @@ class TestUserConnectionRouting:
 
         assert "user_id" in params
         assert sig.parameters["user_id"].default is None
+
+
+class TestGetAllUserDatabases:
+    """Tests para la función get_all_user_databases"""
+
+    def test_get_all_user_databases_existe(self):
+        """Verifica que la función existe y es callable"""
+        assert callable(get_all_user_databases)
+
+    def test_get_all_user_databases_retorna_dict(self):
+        """Verifica que retorna un diccionario"""
+        with patch("app.postgres_db.get_pg_connection") as mock_pg:
+            mock_conn = MagicMock()
+            mock_cursor = MagicMock()
+            mock_cursor.fetchall.return_value = [
+                {"idusuario": 1, "db_asignada": "finanzas"},
+                {"idusuario": 2, "db_asignada": "ventas"},
+                {"idusuario": 3, "db_asignada": None},
+            ]
+            mock_conn.cursor.return_value = mock_cursor
+            mock_pg.return_value = mock_conn
+
+            result = get_all_user_databases()
+
+            assert isinstance(result, dict)
+            assert result[1] == "finanzas"
+            assert result[2] == "ventas"
+            assert result[3] is None
+
+    def test_get_all_user_databases_vacio(self):
+        """Verifica que retorna dict vacío cuando no hay usuarios"""
+        with patch("app.postgres_db.get_pg_connection") as mock_pg:
+            mock_conn = MagicMock()
+            mock_cursor = MagicMock()
+            mock_cursor.fetchall.return_value = []
+            mock_conn.cursor.return_value = mock_cursor
+            mock_pg.return_value = mock_conn
+
+            result = get_all_user_databases()
+
+            assert result == {}
