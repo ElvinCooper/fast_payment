@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from app.routers import clientes, pagos, usuarios, auth, admin
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from datetime import datetime
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -17,6 +19,16 @@ app = FastAPI(
 # Registrar el Limiter y su manejador de errores
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(clientes.router)
 app.include_router(pagos.router)
