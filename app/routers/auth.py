@@ -3,7 +3,7 @@ from app.schemas.auth_schema import LoginRequest, LoginResponse
 from app.database import get_connection
 from app.auth_utils import create_access_token
 from app.postgres_db import sincronizar_usuarios, get_user_database
-from app.limiter import limiter, get_api_key
+from app.limiter import limiter
 from mysql.connector import MySQLConnection
 
 

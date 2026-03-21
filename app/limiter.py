@@ -1,6 +1,5 @@
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from dotenv import load_dotenv
 import os
 from typing import Set
 from fastapi import Security, HTTPException, status
