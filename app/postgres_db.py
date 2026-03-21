@@ -11,6 +11,9 @@ POSTGRES_URL = os.getenv("POSTGRES_BD")
 
 
 def get_pg_connection():
+    print(f"DEBUG POSTGRES_URL: {POSTGRES_URL}")
+    if not POSTGRES_URL:
+        raise ValueError("POSTGRES_BD environment variable is not set")
     return psycopg2.connect(POSTGRES_URL, cursor_factory=RealDictCursor)
 
 
