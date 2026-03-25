@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import patch, MagicMock
 from app.main import app
 
 
@@ -21,7 +22,11 @@ class TestSecurityHeaders:
         assert "includeSubDomains" in response.headers["Strict-Transport-Security"]
 
     def test_security_headers_on_protected_endpoint(
-        self, client: TestClient, mock_db_conn, mock_pg_conn, mock_token_not_revoked
+        self,
+        client: TestClient,
+        mock_user_connection,
+        mock_pg_conn,
+        mock_token_not_revoked,
     ):
         from app.auth_utils import create_access_token
 
