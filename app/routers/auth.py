@@ -45,7 +45,7 @@ def login(
         "idusuario": user["idusuario"],
         "usuario": user["usuario"],
         "access_token": access_token,
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec: B105
         "message": "Login exitoso",
         "user_db": db_asignada,
         "tipouser": user_type,
