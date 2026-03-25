@@ -3,6 +3,7 @@ from reportlab.lib.units import mm
 from datetime import datetime
 from io import BytesIO
 
+
 def generar_recibo_termico(datos):
     buffer = BytesIO()
     # Tamaño tipo ticket (80mm ancho x 200mm alto)
@@ -35,7 +36,7 @@ def generar_recibo_termico(datos):
     c.drawString(10, y, "Cliente:")
     c.setFont("Helvetica", 9)
     y -= 12
-    c.drawString(10, y, datos['cliente'])    
+    c.drawString(10, y, datos["cliente"])
 
     # Línea separadora
     y -= 15
@@ -53,12 +54,13 @@ def generar_recibo_termico(datos):
     # Línea separadora
     y -= 15
     c.line(10, y, width - 10, y)
-    
 
     y -= 15
+    c.setFont("Helvetica-Bold", 9)
     c.drawString(10, y, "Atendido por:")
-    y -= 12
-    c.drawString(10, y, datos['atendido_por'])
+    y -= 10
+    c.setFont("Helvetica", 9)
+    c.drawString(10, y, datos["atendido_por"])
 
     # --- Nota final ---
     y -= 30
