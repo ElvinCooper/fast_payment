@@ -27,7 +27,7 @@ def test_buscar_clientes_success(client, auth_header, mock_user_connection):
             "vprestamo": 1000.50,
             "estado_cuota": "sin cuota vencida",
             "cantidad_cutas": 0,
-            "vpendiente": 0,
+            "deuda_al_dia": 0,
             "mora_total": 0,
             "fecha": "13-03-2026 15:44:26",
         }
@@ -40,7 +40,7 @@ def test_buscar_clientes_success(client, auth_header, mock_user_connection):
     assert len(data) == 1
     assert data[0]["CLIENTE"] == "Juan Perez"
     assert data[0]["cantidad_cutas"] == 0
-    assert data[0]["vpendiente"] == 0 or data[0]["vpendiente"] == "0"
+    assert data[0]["deuda_al_dia"] == 0 or data[0]["deuda_al_dia"] == "0"
     assert data[0]["estado_cuota"] == "sin cuota vencida"
 
 
@@ -78,7 +78,7 @@ def test_obtener_clientes_success(client, auth_header, mock_user_connection):
             "cel": "8091234567",
             "estado_cuota": "sin cuota vencida",
             "cantidad_cutas": 0,
-            "vpendiente": 0,
+            "deuda_al_dia": 0,
             "mora_total": 0,
             "fecha": "15-03-2026 10:00:00",
         }
@@ -108,7 +108,7 @@ def test_obtener_cliente_por_id_success(client, auth_header, mock_user_connectio
             "cel": "8091234567",
             "estado_cuota": "sin cuota vencida",
             "cantidad_cutas": 0,
-            "vpendiente": 0,
+            "deuda_al_dia": 0,
             "mora_total": 0,
             "fecha": "15-03-2026 10:00:00",
         }
@@ -140,7 +140,7 @@ def test_cuotas_vencidas_success(client, auth_header, mock_user_connection):
             "fechav": "2026-06-15T00:00:00",
             "cel": "8091234567",
             "ncuotas": 2,
-            "vpendiente": 500.00,
+            "deuda_al_dia": 500.00,
             "mora_total": 50.00,
             "estado_cuota": "con cuota vencida",
         }
@@ -208,7 +208,7 @@ def test_buscar_clientes_con_fechas(client, auth_header, mock_user_connection):
             "cel": "8091234567",
             "estado_cuota": "con cuota vencida",
             "cantidad_cutas": 2,
-            "vpendiente": 500.00,
+            "deuda_al_dia": 500.00,
             "mora_total": 50.00,
             "fecha": "15-03-2026 10:00:00",
         }

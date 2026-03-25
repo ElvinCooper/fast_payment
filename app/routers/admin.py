@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from app.schemas.routing_schema import UserDBRoutingUpdate
 from app.database import get_connection
-from app.auth_utils import get_current_user
+from app.auth_utils import get_current_user, get_user_connection
 from mysql.connector import MySQLConnection
 import mysql.connector
 from dotenv import load_dotenv
@@ -32,32 +32,33 @@ def is_admin(user_id: int | None) -> bool:
 @router.get("/users")
 def system_users(
     current_user: dict = Depends(get_current_user),
-    conn: MySQLConnection = Depends(get_connection),
+    conn: MySQLConnection = Depends(get_user_connection),
 ):
     """Lista usuarios con acceso al sistema"""
 
-    from app.postgres_db import get_all_user_databases
+    # from app.postgres_db import get_all_user_databases
 
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        "SELECT idusuario, usuario FROM usuario WHERE idusuario not in (1, 2, 3) ORDER BY idusuario"
+        "SELECT idusuario, usuario FROM usuario ORDER BY idusuario"
     )
     results = cursor.fetchall()
     cursor.close()
 
-    user_dbs = get_all_user_databases()
 
-    return [
-        {"usuario": user["usuario"], "db_asignada": user_dbs.get(user["idusuario"])}
-        for user in results
-    ]
+    # user_dbs = get_all_user_databases()
 
+    # return [
+    #     {"usuario": user["usuario"], "db_asignada": user_dbs.get(user["idusuario"])}
+    #     for user in results
+    # ]
+    return [{"usuario": user["usuario"]} for user in results]
 
 @router.put("/user/routing")
 def asignar_acceso(
     user_data: UserDBRoutingUpdate = Body(...),
     current_user: dict = Depends(get_current_user),
-    conn: MySQLConnection = Depends(get_connection),
+    conn: MySQLConnection = Depends(get_user_connection),
 ):
     # Validar que el usuario sea administrador
     user_id = current_user.get("idusuario")
@@ -83,7 +84,7 @@ def asignar_acceso(
 
 @router.get("/server/databases")
 def get_server_databases(
-    conn: MySQLConnection = Depends(get_connection),
+    conn: MySQLConnection = Depends(get_user_connection),
     current_user: dict = Depends(get_current_user),
 ):
     """Obtener las bases de datos disponibles en el servidor"""

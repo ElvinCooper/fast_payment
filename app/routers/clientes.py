@@ -32,7 +32,7 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_user_connection)):
             CASE
                 WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida' END AS estado_cuota,
             IFNULL(CV.cantidad_cutas, 0)     AS cantidad_cutas,
-            IFNULL(CV.vpendiente, 0)  AS vpendiente,
+            IFNULL(CV.deuda_al_dia, 0)  AS deuda_al_dia,
             IFNULL(MORA.mora_total, 0) AS mora_total
         FROM cliente CL
         JOIN prestamo PR ON CL.idcliente = PR.codigo
@@ -40,7 +40,7 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_user_connection)):
             SELECT
                 G.nprestamo,
                 COUNT(G.ncuotas) as cantidad_cutas,
-                SUM(IFNULL(G.vpendiente, 0)) AS vpendiente
+                SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
             FROM pagos G
             WHERE G.fechaven <= SYSDATE()
             AND G.estatus = 0
@@ -107,7 +107,7 @@ def listado_cuotas_vencidas(conn: MySQLConnection = Depends(get_user_connection)
             P.fechav ,        
             P.cel,        
             COUNT(G.ncuotas) AS ncuotas,
-            SUM(IFNULL(G.vpendiente,0)) AS vpendiente,
+            SUM(IFNULL(G.vpendiente,0)) AS deuda_al_dia,
             IFNULL(MORA.mora_total, 0) AS mora_total            
             FROM prestamo P        
             JOIN pagos G ON P.nprestamo = G.nprestamo
@@ -180,7 +180,7 @@ def buscar_clientes_por_nombre(
             ELSE 'sin cuota vencida'
         END AS estado_cuota,
         IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
-        IFNULL(CV.vpendiente, 0) AS vpendiente,
+        IFNULL(CV.deuda_al_dia, 0) AS deuda_al_dia,
         IFNULL(MORA.mora_total, 0) AS mora_total
         FROM cliente CL
         JOIN prestamo PR ON CL.idcliente = PR.CODIGO
@@ -188,7 +188,7 @@ def buscar_clientes_por_nombre(
             SELECT
                 G.nprestamo,
                 COUNT(G.ncuotas) as cantidad_cutas,
-                SUM(IFNULL(G.vpendiente, 0)) AS vpendiente
+                SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
             FROM pagos G
             WHERE G.fechaven <= SYSDATE()
             AND G.estatus = 0
@@ -260,7 +260,7 @@ def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_user_connec
                 WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida'
                END AS estado_cuota,
                IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
-               IFNULL(CV.vpendiente, 0) AS vpendiente,
+               IFNULL(CV.deuda_al_dia, 0) AS deuda_al_dia,
                IFNULL(MORA.mora_total, 0) AS mora_total
         FROM cliente CL
         JOIN prestamo PR ON CL.idcliente = PR.CODIGO
@@ -268,7 +268,7 @@ def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_user_connec
             SELECT
                 G.nprestamo,
                 COUNT(G.ncuotas) as cantidad_cutas,
-                SUM(IFNULL(G.vpendiente, 0)) AS vpendiente
+                SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
             FROM pagos G
             WHERE G.fechaven <= SYSDATE()
             AND G.estatus = 0

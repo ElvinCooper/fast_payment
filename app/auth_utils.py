@@ -7,6 +7,7 @@ import os
 import mysql.connector
 import uuid
 
+
 load_dotenv()
 
 # Configuración JWT
@@ -78,7 +79,12 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
                 detail="Token ha sido revocado",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return {"idusuario": user_id, "username": user_name, "jti": payload.get("jti"), "db_asignada": db_asignada}
+        return {
+            "idusuario": user_id,
+            "username": user_name,
+            "jti": payload.get("jti"),
+            "db_asignada": db_asignada,
+        }
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -98,13 +104,13 @@ def get_user_connection(current_user: dict = Depends(get_current_user)):
     """Dependencia que combina autenticación con conexión dinámica a BD del usuario"""
     from app.database import get_connection as get_db
 
-    user_id = current_user.get("id")
+    user_id = current_user.get("idusuario")
     yield from get_db(user_id=user_id)
 
 
 def get_db_connection(user: dict = Depends(get_current_user)):
     """Dependencia para obtener conexión dinámica a la base de datos del usuario"""
-    from app.database import get_connection as get_main_db
+    # from app.database import get_connection as get_main_db
 
     user_id = user.get("id")
     if not user_id:
@@ -113,7 +119,7 @@ def get_db_connection(user: dict = Depends(get_current_user)):
             detail="Usuario no encontrado en el token",
         )
 
-    conn = get_main_db.__next__()
+    conn = get_user_connection.__next__()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM user_db_routing WHERE user_id = %s", (user_id,))
     route = cursor.fetchone()

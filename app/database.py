@@ -15,9 +15,9 @@ def get_connection(user_id: int = None):
     """conexion nueva por cada request."""
     from app.postgres_db import get_user_database
 
-    db_name = DATABASE
+    db_name = DATABASE  
     if user_id:
-        db_asignada = get_user_database(user_id)
+        db_asignada = get_user_database(user_id) 
         if db_asignada:
             db_name = db_asignada
 

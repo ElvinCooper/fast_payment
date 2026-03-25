@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from app.schemas.auth_schema import LoginRequest, LoginResponse
 from app.database import get_connection
-from app.auth_utils import create_access_token
-from app.postgres_db import get_user_database, get_user_type, get_user_db_from_ciausers
+from app.auth_utils import create_access_token, get_user_connection
+from app.postgres_db import get_user_type, get_user_db_from_ciausers
 from app.limiter import limiter
 from mysql.connector import MySQLConnection
 
@@ -53,11 +53,12 @@ def login(
         raise HTTPException(status_code=401, detail="Usuario o clave incorrectos")
 
     user_type = get_user_type(user_id_cia)
+    empresa = user_db_info.get("empresa", "")
 
     access_token = create_access_token(
         data={
             "sub": user["usuario"],
-            "id": user["idusuario"],
+            "id": user_id_cia,
             "db_asignada": db_asignada,
         }
     )
@@ -69,5 +70,6 @@ def login(
         "token_type": "bearer",  # nosec: B105
         "message": "Login exitoso",
         "user_db": db_asignada,
+        "empresa": empresa,
         "tipouser": user_type,
     }

@@ -38,7 +38,7 @@ class ClienteResponse(BaseModel):
     cel: Optional[str] = None
     estado_cuota: Optional[str] = None
     cantidad_cutas: int
-    vpendiente: Decimal = Field(max_digits=10, decimal_places=2)
+    deuda_al_dia: Decimal = Field(max_digits=10, decimal_places=2)
     mora_total: Decimal = Field(
         default=Decimal("0.00"), max_digits=10, decimal_places=2
     )
@@ -59,7 +59,7 @@ class CuotaVencidaResponse(BaseModel):
     fechav: datetime
     cel: str
     ncuotas: int
-    vpendiente: Decimal = Field(max_digits=10, decimal_places=2)
+    deuda_al_dia: Decimal = Field(max_digits=10, decimal_places=2)
     mora_total: Decimal = Field(
         default=Decimal("0.00"), max_digits=10, decimal_places=2
     )

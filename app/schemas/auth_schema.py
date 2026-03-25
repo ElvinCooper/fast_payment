@@ -13,6 +13,7 @@ class LoginResponse(BaseModel):
     token_type: str
     message: str
     user_db: str | None
+    empresa: str | None
     tipouser: str | None
 
 
