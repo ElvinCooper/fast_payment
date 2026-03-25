@@ -1,6 +1,5 @@
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
-from datetime import datetime
 from io import BytesIO
 
 
@@ -10,7 +9,6 @@ def generar_recibo_termico(datos):
     width = 70 * mm
     height = 80 * mm
 
-    filename = f"recibo_{datos['nro_recibo']}.pdf"
     c = canvas.Canvas(buffer, pagesize=(width, height))
 
     y = height - 20  # posición inicial

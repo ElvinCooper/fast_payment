@@ -1,6 +1,6 @@
 import pytest
 from app.auth_utils import create_access_token
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from io import BytesIO
 
 

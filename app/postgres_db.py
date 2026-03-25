@@ -2,7 +2,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 import os
-from app.database import HOST, PORT, USER, DBPASSWORD, DATABASE
+from app.database import HOST, PORT, USER, DBPASSWORD
 import mysql.connector
 
 load_dotenv()

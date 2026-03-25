@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, Depends, Request
 from app.schemas.auth_schema import LoginRequest, LoginResponse
 from app.database import get_connection
 from app.auth_utils import create_access_token
