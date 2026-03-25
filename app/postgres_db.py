@@ -64,6 +64,24 @@ def get_user_type(user_id: int) -> str:
         conn.close()
 
 
+def get_all_empresas() -> list:
+    """Obtiene todas las empresas desde ciasetup"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT idcia, cidescripcion, descbd FROM ciasetup")
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
 def get_all_user_databases() -> dict:
     conn = mysql.connector.connect(
         host=HOST,
