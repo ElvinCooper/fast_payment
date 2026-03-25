@@ -19,6 +19,16 @@ router = APIRouter(
 )
 
 
+def is_admin(user_id: int | None) -> bool:
+    """Verifica si el usuario es administrador basándose en ciausers.tipouser"""
+    if user_id is None:
+        return False
+    from app.postgres_db import get_user_type
+
+    user_type = get_user_type(user_id)
+    return user_type is not None and user_type != "standard"
+
+
 @router.get("/users")
 def system_users(
     current_user: dict = Depends(get_current_user),
@@ -50,8 +60,8 @@ def asignar_acceso(
     conn: MySQLConnection = Depends(get_connection),
 ):
     # Validar que el usuario sea administrador
-    admin_user_ids = [1, 2, 3]
-    if current_user.get("idusuario") not in admin_user_ids:
+    user_id = current_user.get("idusuario")
+    if not is_admin(user_id):
         raise HTTPException(
             status_code=403,
             detail="Acceso denegado. Solo administradores pueden acceder a esta función",
@@ -78,9 +88,8 @@ def get_server_databases(
 ):
     """Obtener las bases de datos disponibles en el servidor"""
 
-    # Validar que el usuario sea administrador
-    admin_user_ids = [1, 2, 3]
-    if current_user.get("idusuario") not in admin_user_ids:
+    user_id = current_user.get("idusuario")
+    if not is_admin(user_id):
         raise HTTPException(
             status_code=403,
             detail="Acceso denegado. Solo administradores pueden acceder a esta función",

@@ -42,6 +42,28 @@ def get_user_database(user_id: int) -> str:
         conn.close()
 
 
+def get_user_type(user_id: int) -> str:
+    """Obtiene el tipo de usuario desde ciausers"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT tipouser FROM ciausers WHERE idusers = %s",
+            (user_id,),
+        )
+        result = cursor.fetchone()
+        return result[0] if result else None
+    finally:
+        conn.close()
+
+
 def get_all_user_databases() -> dict:
     conn = mysql.connector.connect(
         host=HOST,

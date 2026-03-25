@@ -164,6 +164,7 @@ def test_get_server_databases_error_conexion(client, admin_auth_header, mock_db_
     with (
         patch("mysql.connector.connect") as mock_mysql_conn,
         patch("app.auth_utils.is_token_revoked", return_value=False),
+        patch("app.routers.admin.is_admin", return_value=True),
     ):
         mock_mysql_conn.side_effect = mysql.connector.Error("Connection refused")
 
