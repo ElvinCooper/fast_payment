@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from app.schemas.auth_schema import LoginRequest, LoginResponse
 from app.database import get_connection
 from app.auth_utils import create_access_token
-from app.postgres_db import sincronizar_usuarios, get_user_database
+from app.postgres_db import get_user_database
 from app.limiter import limiter
 from mysql.connector import MySQLConnection
 
@@ -13,9 +13,8 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit("10/minute")
 def login(
-    request: Request,    
-    login_data: LoginRequest,        
-    background_tasks: BackgroundTasks,
+    request: Request,
+    login_data: LoginRequest,
     # api_key: str = Depends(get_api_key),
     conn: MySQLConnection = Depends(get_connection),
 ):
@@ -32,18 +31,20 @@ def login(
 
     user_db = get_user_database(user["idusuario"])
     db_asignada = user_db or "default"
-    
-    access_token = create_access_token(
-        data={"sub": user["usuario"], "id": user["idusuario"], "db_asignada": db_asignada}
-    )
 
-    background_tasks.add_task(sincronizar_usuarios)
+    access_token = create_access_token(
+        data={
+            "sub": user["usuario"],
+            "id": user["idusuario"],
+            "db_asignada": db_asignada,
+        }
+    )
 
     return {
         "idusuario": user["idusuario"],
         "usuario": user["usuario"],
         "access_token": access_token,
-        "token_type": "bearer",  
+        "token_type": "bearer",
         "message": "Login exitoso",
         "user_db": db_asignada,
     }

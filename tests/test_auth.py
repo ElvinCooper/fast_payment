@@ -11,19 +11,17 @@ def test_login_success(client, mock_db_conn, mock_pg_conn):
     with patch("app.routers.auth.get_user_database") as mock_get_db:
         mock_get_db.return_value = "finanzas_test"
 
-        # Mock para sincronizar_usuarios
-        with patch("app.routers.auth.sincronizar_usuarios"):
-            response = client.post(
-                "/api/v1/auth/login",
-                json={"usuario": "testuser", "password": "correct_clave"},
-            )
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"usuario": "testuser", "password": "correct_clave"},
+        )
 
-            assert response.status_code == 200
-            data = response.json()
-            assert data["usuario"] == "testuser"
-            assert "access_token" in data
-            assert data["token_type"] == "bearer"
-            assert data["user_db"] == "finanzas_test"
+        assert response.status_code == 200
+        data = response.json()
+        assert data["usuario"] == "testuser"
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
+        assert data["user_db"] == "finanzas_test"
 
 
 def test_login_failure(client, mock_db_conn, mock_pg_conn):
@@ -32,10 +30,7 @@ def test_login_failure(client, mock_db_conn, mock_pg_conn):
     # Simular que el usuario NO existe o clave incorrecta
     mock_cursor.fetchone.return_value = None
 
-    with (
-        patch("app.routers.auth.get_user_database", return_value=None),
-        patch("app.routers.auth.sincronizar_usuarios"),
-    ):
+    with patch("app.routers.auth.get_user_database", return_value=None):
         response = client.post(
             "/api/v1/auth/login",
             json={"usuario": "testuser", "password": "wrong_clave"},

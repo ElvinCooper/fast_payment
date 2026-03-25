@@ -80,34 +80,26 @@ def test_asignar_acceso_usuario_no_existe(client, admin_auth_header, mock_db_con
 
 
 def test_asignar_acceso_no_existe_en_mapeo(client, admin_auth_header, mock_db_conn):
-    mock_conn, mock_cursor = mock_db_conn
-
-    mock_cursor.fetchone.return_value = (3,)
-
     with patch(
-        "app.postgres_db.asignar_db_usuario", return_value="Postgresql: 0 MySQL: 0"
+        "app.postgres_db.asignar_db_usuario", return_value="Usuario no encontrado"
     ):
         response = client.put(
             "/api/v1/admin/user/routing",
-            json={"idusuario": 3, "database": "testdb", "clave": "testkey"},
+            json={"idusuario": 3, "clave": "testkey"},
             headers=admin_auth_header,
         )
 
     assert response.status_code == 404
-    assert "Usuario no existe en mapeo_usuarios" in response.json()["detail"]
+    assert "Usuario no encontrado" in response.json()["detail"]
 
 
 def test_asignar_acceso_success(client, admin_auth_header, mock_db_conn):
-    mock_conn, mock_cursor = mock_db_conn
-
-    mock_cursor.fetchone.return_value = (3,)
-
     with patch(
-        "app.postgres_db.asignar_db_usuario", return_value="Postgresql: 1 MySQL: 1"
+        "app.postgres_db.asignar_db_usuario", return_value="Filas actualizadas: 1"
     ):
         response = client.put(
             "/api/v1/admin/user/routing",
-            json={"idusuario": 3, "database": "testdb", "clave": "testkey"},
+            json={"idusuario": 3, "clave": "testkey"},
             headers=admin_auth_header,
         )
 

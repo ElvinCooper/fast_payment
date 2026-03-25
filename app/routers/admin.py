@@ -57,31 +57,16 @@ def asignar_acceso(
             detail="Acceso denegado. Solo administradores pueden acceder a esta función",
         )
 
-    # Validar que se envió al menos un campo
-    if user_data.database is None and user_data.clave is None:
-        raise HTTPException(
-            status_code=400, detail="Debe enviar al menos 'database' o 'clave'"
-        )
-
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT idusuario FROM usuario WHERE idusuario = %s", (user_data.idusuario,)
-    )
-    user_exists = cursor.fetchone()
-    cursor.close()
-    if not user_exists:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    # Validar que se envió al menos la clave
+    if user_data.clave is None:
+        raise HTTPException(status_code=400, detail="Debe enviar la 'clave'")
 
     from app.postgres_db import asignar_db_usuario
 
-    result = asignar_db_usuario(
-        user_data.idusuario, user_data.database, user_data.clave
-    )
+    result = asignar_db_usuario(user_data.idusuario, user_data.clave)
 
-    if user_data.database is not None and "Postgresql: 0" in str(result):
-        raise HTTPException(
-            status_code=404, detail="Usuario no existe en mapeo_usuarios"
-        )
+    if "no encontrado" in result.lower():
+        raise HTTPException(status_code=404, detail=result)
 
     return {"message": "Usuario actualizado exitosamente"}
 
