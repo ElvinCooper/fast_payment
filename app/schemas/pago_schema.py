@@ -1,11 +1,13 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, field_serializer
 from typing import Optional
 from decimal import Decimal
+from datetime import datetime
 
 class PagoRequest(BaseModel):
     idcliente: int
     cliente_nombre: str = Field(min_length=3, max_length=45)
     monto: Decimal = Field(max_digits=10, decimal_places=2)
+    # idprestamo: int
     idusuario: int    
     usuario_nombre: str 
     
@@ -30,3 +32,13 @@ class PagoRequest(BaseModel):
 class PagoResponse(BaseModel):
     idpago: Optional[int] = None
     message: str
+
+
+
+class ComprobantePago(BaseModel):        
+    cliente: str = Field(min_length=3, max_length=45)
+    monto: Decimal = Field(max_digits=10, decimal_places=2)    
+    atendido_por: str = Field(min_length=3, max_length=45)
+    
+    
+    

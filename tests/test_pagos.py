@@ -1,5 +1,7 @@
 import pytest
 from app.auth_utils import create_access_token
+from unittest.mock import patch, MagicMock
+from io import BytesIO
 
 
 @pytest.fixture
@@ -47,3 +49,41 @@ def test_registrar_pago_monto_invalido(client, auth_header):
 def test_registrar_pago_sin_auth(client):
     response = client.post("/api/v1/pagos/", json={})
     assert response.status_code == 401
+
+
+def test_generar_recibo_pdf_success(client):
+    """Test para generar recibo en PDF"""
+    mock_pdf = BytesIO(b"PDF content")
+
+    with patch("app.routers.pagos.generar_recibo_termico") as mock_gen:
+        mock_gen.return_value = mock_pdf
+
+        recibo_data = {
+            "cliente": "Juan Perez",
+            "monto": 2500.00,
+            "atendido_por": "Cajero Admin",
+        }
+
+        response = client.post("/api/v1/pagos/recibo", json=recibo_data)
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/pdf"
+        assert "attachment; filename=recibo_" in response.headers["content-disposition"]
+
+
+def test_generar_recibo_pdf_error(client):
+    """Test para manejar error al generar PDF"""
+    with patch(
+        "app.routers.pagos.generar_recibo_termico",
+        side_effect=Exception("Error generando PDF"),
+    ):
+        recibo_data = {
+            "cliente": "Juan Perez",
+            "monto": 2500.00,
+            "atendido_por": "Cajero Admin",
+        }
+
+        response = client.post("/api/v1/pagos/recibo", json=recibo_data)
+
+        assert response.status_code == 500
+        assert "Error al generar comprobante" in response.json()["detail"]

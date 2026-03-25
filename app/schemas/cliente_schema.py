@@ -39,6 +39,9 @@ class ClienteResponse(BaseModel):
     estado_cuota: Optional[str] = None
     cantidad_cutas: int
     vpendiente: Decimal = Field(max_digits=10, decimal_places=2)
+    mora_total: Decimal = Field(
+        default=Decimal("0.00"), max_digits=10, decimal_places=2
+    )
 
     @field_validator("CLIENTE", mode="before")
     @classmethod
@@ -57,4 +60,7 @@ class CuotaVencidaResponse(BaseModel):
     cel: str
     ncuotas: int
     vpendiente: Decimal = Field(max_digits=10, decimal_places=2)
+    mora_total: Decimal = Field(
+        default=Decimal("0.00"), max_digits=10, decimal_places=2
+    )
     estado_cuota: str = "con cuota vencida"  # Campo por default

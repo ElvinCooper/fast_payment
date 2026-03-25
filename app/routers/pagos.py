@@ -1,8 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.pago_schema import PagoRequest, PagoResponse
+from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago
 from app.auth_utils import get_user_connection
 from mysql.connector import MySQLConnection, Error
 from datetime import datetime, timedelta, timezone
+from fastapi.responses import StreamingResponse
+from app.services.recibo_pdf import generar_recibo_termico
+import uuid 
+from zoneinfo import ZoneInfo
 
 router = APIRouter(
     prefix="/api/v1/pagos",
@@ -53,8 +57,7 @@ def registrar_pago(
                 fecha_solo,  # Fecha
                 hora_full,  # Hora (Objeto datetime completo para campo DATETIME)
                 pago.monto,  # MontoPgdo
-                pago.idusuario,  # nusuario
-                # pago.nota,           # nota
+                pago.idusuario,  # nusuario                
                 pago.usuario_nombre,  # cusuario
             ),
         )
@@ -74,3 +77,36 @@ def registrar_pago(
             status_code=500,
             detail=f"Error al registrar el pago en la tabla handheldata: {str(e)}",
         )
+
+
+@router.post("/recibo")
+def generar_recibo(recibo: ComprobantePago):
+    """
+    Generar recibo de pago luego de realizar el envio
+    """
+    offset = timezone(timedelta(hours=-4))  # Zona horaria de RD.   
+    ahora = datetime.now()
+    fecha = ahora.date()  
+    hora  = ahora.replace(tzinfo=None)  
+    hora_fecha = fecha 
+    
+    datos_recibo = {
+        "nro_recibo": str(uuid.uuid4())[:8],
+        "cliente": recibo.cliente,        
+        "fecha": ahora,
+        "monto": recibo.monto,
+        "atendido_por": recibo.atendido_por
+    }
+    
+    try:
+        comprobante = generar_recibo_termico(datos_recibo)
+        return StreamingResponse(
+            comprobante,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=recibo_{datos_recibo['nro_recibo']}_{datos_recibo['fecha'].strftime('%Y%m%d')}.pdf"
+            }
+        )
+    except Exception as err:
+        raise HTTPException(status_code=500, detail=f"Error al generar comprobante de pago: {err}",)    
+        
