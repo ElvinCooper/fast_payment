@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from app.schemas.auth_schema import LoginRequest, LoginResponse
 from app.database import get_connection
 from app.auth_utils import create_access_token
-from app.postgres_db import get_user_database
+from app.postgres_db import get_user_database, get_user_type
 from app.limiter import limiter
 from mysql.connector import MySQLConnection
 
@@ -31,6 +31,7 @@ def login(
 
     user_db = get_user_database(user["idusuario"])
     db_asignada = user_db or "default"
+    user_type = get_user_type(user["idusuario"])
 
     access_token = create_access_token(
         data={
@@ -47,4 +48,5 @@ def login(
         "token_type": "bearer",
         "message": "Login exitoso",
         "user_db": db_asignada,
+        "tipouser": user_type,
     }

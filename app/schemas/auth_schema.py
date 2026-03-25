@@ -13,6 +13,7 @@ class LoginResponse(BaseModel):
     token_type: str
     message: str
     user_db: str | None
+    tipouser: str | None
 
 
 class TokenRefreshResponse(BaseModel):
