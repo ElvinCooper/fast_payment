@@ -70,11 +70,12 @@ def test_asignar_acceso_usuario_no_existe(client, admin_auth_header, mock_db_con
     mock_cursor.fetchone.return_value = None
 
     with patch("app.routers.admin.is_admin", return_value=True):
-        response = client.put(
-            "/api/v1/admin/user/routing",
-            json={"idusuario": 999, "database": "testdb", "clave": "testkey"},
-            headers=admin_auth_header,
-        )
+        with patch("app.postgres_db.get_user_database", return_value=None):
+            response = client.put(
+                "/api/v1/admin/user/routing",
+                json={"idusuario": 999, "database": "testdb", "clave": "testkey"},
+                headers=admin_auth_header,
+            )
 
     assert response.status_code == 404
     assert "Usuario no encontrado" in response.json()["detail"]
