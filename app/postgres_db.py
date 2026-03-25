@@ -64,6 +64,35 @@ def get_user_type(user_id: int) -> str:
         conn.close()
 
 
+def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
+    """Obtiene la BD asignada y el id del usuario desde ciausers"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT u.idusers, c.descbd 
+            FROM ciausers u
+            JOIN ciasetup c ON u.idcia = c.idcia
+            WHERE u.usuario = %s AND u.clave = %s
+            """,
+            (usuario, clave),
+        )
+        result = cursor.fetchone()
+        if result:
+            return {"idusers": result["idusers"], "db_asignada": result["descbd"]}
+        return None
+    finally:
+        conn.close()
+
+
 def get_all_empresas() -> list:
     """Obtiene todas las empresas desde ciasetup"""
     conn = mysql.connector.connect(
