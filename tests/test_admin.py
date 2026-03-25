@@ -28,32 +28,23 @@ def test_get_users_success(client, admin_auth_header, mock_db_conn):
         {"idusuario": 4, "usuario": "anotheruser"},
     ]
 
-    with patch("app.postgres_db.get_all_user_databases") as mock_get_dbs:
-        mock_get_dbs.return_value = {
-            3: "finanzas_test",
-            4: None,
-        }
+    response = client.get("/api/v1/admin/users", headers=admin_auth_header)
 
-        response = client.get("/api/v1/admin/users", headers=admin_auth_header)
-
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 2
-        assert data[0]["usuario"] == "testuser"
-        assert data[0]["db_asignada"] == "finanzas_test"
-        assert data[1]["usuario"] == "anotheruser"
-        assert data[1]["db_asignada"] is None
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert data[0]["usuario"] == "testuser"
+    assert data[1]["usuario"] == "anotheruser"
 
 
 def test_get_users_empty(client, admin_auth_header, mock_db_conn):
     mock_conn, mock_cursor = mock_db_conn
     mock_cursor.fetchall.return_value = []
 
-    with patch("app.postgres_db.get_all_user_databases", return_value={}):
-        response = client.get("/api/v1/admin/users", headers=admin_auth_header)
+    response = client.get("/api/v1/admin/users", headers=admin_auth_header)
 
-        assert response.status_code == 200
-        assert response.json() == []
+    assert response.status_code == 200
+    assert response.json() == []
 
 
 def test_asignar_acceso_sin_auth(client):
@@ -161,17 +152,37 @@ def test_get_server_databases_success(client, admin_auth_header, mock_db_conn):
     assert "testdb" in data["databases"]
 
 
-def test_get_server_databases_error_conexion(client, admin_auth_header, mock_db_conn):
-    mock_conn, mock_cursor = mock_db_conn
-
+def test_get_server_databases_error_conexion(client, admin_auth_header):
+    """Test que simula un error al conectar al servidor MySQL"""
     import mysql.connector
+
+    # Mockear get_user_connection para evitar que intente conectar
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.return_value = {"idusuario": 1, "tipouser": "admin"}
+    mock_conn.cursor.return_value = mock_cursor
 
     with (
         patch("mysql.connector.connect") as mock_mysql_conn,
         patch("app.auth_utils.is_token_revoked", return_value=False),
         patch("app.routers.admin.is_admin", return_value=True),
+        patch("app.postgres_db.get_user_database") as mock_get_db,
+        patch("app.auth_utils.get_user_connection") as mock_user_conn,
     ):
-        mock_mysql_conn.side_effect = mysql.connector.Error("Connection refused")
+        # Configurar el mock para get_user_database
+        mock_get_db.return_value = "ciadatabase"
+        mock_user_conn.return_value = mock_conn
+
+        # Hacer que la conexión del servidor falle
+        def connect_side_effect(*args, **kwargs):
+            # Permitir la primera conexión (get_user_database),
+            # pero fallar la segunda (SHOW DATABASES)
+            if kwargs.get("database") == "ciadatabase":
+                mock_temp_conn = MagicMock()
+                return mock_temp_conn
+            raise mysql.connector.Error("Connection refused")
+
+        mock_mysql_conn.side_effect = connect_side_effect
 
         response = client.get(
             "/api/v1/admin/server/databases", headers=admin_auth_header

@@ -18,8 +18,8 @@ def mock_db_conn():
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value = mock_cursor
 
-    # Sobrescribir la dependencia get_connection
-    app.dependency_overrides[get_connection] = lambda: mock_conn
+    # Sobrescribir la dependencia get_user_connection
+    app.dependency_overrides[get_user_connection] = lambda: mock_conn
     yield mock_conn, mock_cursor
     app.dependency_overrides.clear()
 
