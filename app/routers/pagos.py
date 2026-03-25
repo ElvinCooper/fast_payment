@@ -5,7 +5,7 @@ from mysql.connector import MySQLConnection, Error
 from datetime import datetime, timedelta, timezone
 from fastapi.responses import StreamingResponse
 from app.services.recibo_pdf import generar_recibo_termico
-import uuid 
+import uuid
 from zoneinfo import ZoneInfo
 
 router = APIRouter(
@@ -57,7 +57,7 @@ def registrar_pago(
                 fecha_solo,  # Fecha
                 hora_full,  # Hora (Objeto datetime completo para campo DATETIME)
                 pago.monto,  # MontoPgdo
-                pago.idusuario,  # nusuario                
+                pago.idusuario,  # nusuario
                 pago.usuario_nombre,  # cusuario
             ),
         )
@@ -84,29 +84,30 @@ def generar_recibo(recibo: ComprobantePago):
     """
     Generar recibo de pago luego de realizar el envio
     """
-    offset = timezone(timedelta(hours=-4))  # Zona horaria de RD.   
-    ahora = datetime.now()
-    fecha = ahora.date()  
-    hora  = ahora.replace(tzinfo=None)  
-    hora_fecha = fecha 
-    
+    offset = timezone(timedelta(hours=-4))  # Zona horaria de RD.
+    ahora = datetime.now(offset)
+    ahora_str = ahora.strftime("%d-%m-%Y %H:%M")
+
     datos_recibo = {
         "nro_recibo": str(uuid.uuid4())[:8],
-        "cliente": recibo.cliente,        
-        "fecha": ahora,
+        "cliente": recibo.cliente,
+        "fecha": ahora_str,
         "monto": recibo.monto,
-        "atendido_por": recibo.atendido_por
+        "atendido_por": recibo.atendido_por,
     }
-    
+
     try:
         comprobante = generar_recibo_termico(datos_recibo)
+        fecha_filename = ahora.strftime("%Y%m%d")
         return StreamingResponse(
             comprobante,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f"attachment; filename=recibo_{datos_recibo['nro_recibo']}_{datos_recibo['fecha'].strftime('%Y%m%d')}.pdf"
-            }
+                "Content-Disposition": f"attachment; filename=recibo_{datos_recibo['nro_recibo']}_{fecha_filename}.pdf"
+            },
         )
     except Exception as err:
-        raise HTTPException(status_code=500, detail=f"Error al generar comprobante de pago: {err}",)    
-        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al generar comprobante de pago: {err}",
+        )
