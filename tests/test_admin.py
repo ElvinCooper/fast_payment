@@ -51,57 +51,63 @@ def test_get_users_empty(client, admin_auth_header, mock_db_conn):
 
 def test_asignar_acceso_sin_auth(client):
     response = client.put(
-        "/api/v1/admin/user/routing",
-        json={"idusuario": 3, "database": "testdb", "clave": "testkey"},
+        "/api/v1/admin/user/cia",
+        json={"idusers": 3, "clave": "testkey"},
     )
     assert response.status_code == 401
 
 
 def test_asignar_acceso_usuario_no_existe(client, admin_auth_header, mock_db_conn):
-    mock_conn, mock_cursor = mock_db_conn
-
-    mock_cursor.fetchone.return_value = None
-
     with patch("app.routers.admin.is_admin", return_value=True):
-        with patch("app.postgres_db.get_user_database", return_value=None):
+        with patch(
+            "app.postgres_db.actualizar_usuario_cia",
+            return_value="Usuario no encontrado en ciausers",
+        ):
             response = client.put(
-                "/api/v1/admin/user/routing",
-                json={"idusuario": 999, "database": "testdb", "clave": "testkey"},
+                "/api/v1/admin/user/cia",
+                json={"idusers": 999, "clave": "testkey"},
                 headers=admin_auth_header,
             )
 
     assert response.status_code == 404
-    assert "Usuario no encontrado" in response.json()["detail"]
+    assert "no encontrado" in response.json()["detail"].lower()
 
 
 def test_asignar_acceso_no_existe_en_mapeo(client, admin_auth_header, mock_db_conn):
     with patch("app.routers.admin.is_admin", return_value=True):
         with patch(
-            "app.postgres_db.asignar_db_usuario", return_value="Usuario no encontrado"
+            "app.postgres_db.actualizar_usuario_cia",
+            return_value="Usuario no encontrado en ciausers",
         ):
             response = client.put(
-                "/api/v1/admin/user/routing",
-                json={"idusuario": 3, "clave": "testkey"},
+                "/api/v1/admin/user/cia",
+                json={"idusers": 3, "clave": "testkey"},
                 headers=admin_auth_header,
             )
 
     assert response.status_code == 404
-    assert "Usuario no encontrado" in response.json()["detail"]
+    assert "no encontrado" in response.json()["detail"].lower()
 
 
 def test_asignar_acceso_success(client, admin_auth_header, mock_db_conn):
     with patch("app.routers.admin.is_admin", return_value=True):
         with patch(
-            "app.postgres_db.asignar_db_usuario", return_value="Filas actualizadas: 1"
+            "app.postgres_db.actualizar_usuario_cia",
+            return_value="Usuario actualizado exitosamente",
         ):
             response = client.put(
-                "/api/v1/admin/user/routing",
-                json={"idusuario": 3, "clave": "testkey"},
+                "/api/v1/admin/user/cia",
+                json={
+                    "idusers": 3,
+                    "clave": "testkey",
+                    "estatus": 1,
+                    "tipouser": "admin",
+                },
                 headers=admin_auth_header,
             )
 
     assert response.status_code == 200
-    assert "actualizado exitosamente" in response.json()["message"]
+    assert "actualizado" in response.json()["message"].lower()
 
 
 def test_get_server_databases_sin_auth(client):

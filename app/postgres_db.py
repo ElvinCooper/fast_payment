@@ -166,3 +166,49 @@ def asignar_db_usuario(user_id: int, clave: str):
     mysql_conn.close()
 
     return f"Filas actualizadas: {rows_affected}"
+
+
+def actualizar_usuario_cia(
+    user_id: int, clave: str = None, estatus: int = None, tipouser: str = None
+):
+    """Actualiza campos de un usuario en la tabla ciausers (bd central)"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
+    try:
+        cursor = conn.cursor()
+
+        campos = []
+        valores = []
+
+        if clave is not None:
+            campos.append("clave = %s")
+            valores.append(clave)
+        if estatus is not None:
+            campos.append("estatus = %s")
+            valores.append(estatus)
+        if tipouser is not None:
+            campos.append("tipouser = %s")
+            valores.append(tipouser)
+
+        if not campos:
+            return "No hay campos para actualizar"
+
+        valores.append(user_id)
+
+        query = f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s"
+        cursor.execute(query, valores)
+        conn.commit()
+        rows_affected = cursor.rowcount
+        cursor.close()
+
+        if rows_affected == 0:
+            return "Usuario no encontrado en ciausers"
+        return "Usuario actualizado exitosamente"
+    finally:
+        conn.close()

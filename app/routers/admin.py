@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
-from app.schemas.routing_schema import UserDBRoutingUpdate
+from app.schemas.routing_schema import UserCIAUpdate
 from app.auth_utils import get_current_user, get_user_connection
 from mysql.connector import MySQLConnection
 import mysql.connector
@@ -45,13 +45,12 @@ def system_users(
     ]
 
 
-@router.put("/user/routing")
-def asignar_acceso(
-    user_data: UserDBRoutingUpdate = Body(...),
+@router.put("/user/cia")
+def actualizar_usuario_cia(
+    user_data: UserCIAUpdate = Body(...),
     current_user: dict = Depends(get_current_user),
-    conn: MySQLConnection = Depends(get_user_connection),
 ):
-    # Validar que el usuario sea administrador
+    """Actualiza datos de usuario en la tabla ciausers (clave, estatus, tipouser)"""
     user_id = current_user.get("idusuario")
     if not is_admin(user_id):
         raise HTTPException(
@@ -59,18 +58,19 @@ def asignar_acceso(
             detail="Acceso denegado. Solo administradores pueden acceder a esta función",
         )
 
-    # Validar que se envió al menos la clave
-    if user_data.clave is None:
-        raise HTTPException(status_code=400, detail="Debe enviar la 'clave'")
+    from app.postgres_db import actualizar_usuario_cia as actualizar_cia
 
-    from app.postgres_db import asignar_db_usuario
-
-    result = asignar_db_usuario(user_data.idusuario, user_data.clave)
+    result = actualizar_cia(
+        user_data.idusers,
+        clave=user_data.clave,
+        estatus=user_data.estatus,
+        tipouser=user_data.tipouser,
+    )
 
     if "no encontrado" in result.lower():
         raise HTTPException(status_code=404, detail=result)
 
-    return {"message": "Usuario actualizado exitosamente"}
+    return {"message": result}
 
 
 @router.get("/server/databases")
