@@ -38,7 +38,7 @@ def test_registrar_pago_success(client, auth_header, mock_user_connection):
     assert data["idpago"] == 101
 
 
-def test_registrar_pago_monto_invalido(client, auth_header):
+def test_registrar_pago_monto_invalido(client, auth_header, mock_user_connection):
     # Probar el validador personalizado (monto <= 0)
     pago_data = {
         "idcliente": 724353,
