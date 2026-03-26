@@ -63,6 +63,8 @@ def login(
             "sub": user["usuario"],
             "id": user_id_cia,
             "db_asignada": db_asignada,
+            "tipouser": user_type,
+            "empresa": empresa,
         }
     )
 

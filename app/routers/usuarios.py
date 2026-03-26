@@ -1,15 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.usuario_schema import UserBase
 from app.auth_utils import (
-    get_user_connection,
     get_current_user,
     create_access_token,
     create_refresh_token,
     is_token_revoked,
 )
-from mysql.connector import MySQLConnection
-from typing import List
-from app.database import get_connection
 
 router = APIRouter(
     prefix="/api/v1/usuarios",
@@ -18,29 +14,14 @@ router = APIRouter(
 
 
 @router.get("/me", response_model=UserBase)
-def obtener_usuario_actual(
-    current_user: dict = Depends(get_current_user),
-    conn: MySQLConnection = Depends(get_connection),
-):
+def obtener_usuario_actual(current_user: dict = Depends(get_current_user)):
     """Obtener el usuario autenticado actual"""
-    cursor = conn.cursor(dictionary=True)
-
-    query = """
-              SELECT CU.tipouser, CT.cidescripcion 
-              FROM ciausers CU 
-              JOIN ciasetup CT on CU.idcia = CT.idcia 
-              WHERE CU.idusers = %s
-            """
-    cursor.execute(query, (current_user["idusuario"],))
-    usuario = cursor.fetchone()
-    cursor.close()
-
     return {
         "idusuario": current_user["idusuario"],
         "usuario": current_user["username"],
         "db_asignada": current_user["db_asignada"],
-        "empresa": usuario["cidescripcion"],
-        "tipouser": usuario["tipouser"],
+        "empresa": current_user.get("empresa", ""),
+        "tipouser": current_user.get("tipouser", ""),
     }
 
 

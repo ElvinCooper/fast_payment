@@ -84,6 +84,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             "username": user_name,
             "jti": payload.get("jti"),
             "db_asignada": db_asignada,
+            "tipouser": payload.get("tipouser"),
+            "empresa": payload.get("empresa"),
         }
 
     except jwt.ExpiredSignatureError:
