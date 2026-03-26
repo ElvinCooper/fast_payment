@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago
 from app.auth_utils import get_user_connection
+from app.utils.pagos import validar_monto_pago
 from mysql.connector import MySQLConnection, Error
 from datetime import datetime, timedelta, timezone
 from fastapi.responses import StreamingResponse
@@ -20,20 +21,24 @@ def registrar_pago(
     """Registrar un nuevo pago en el sistema"""
     cursor = conn.cursor()
 
-    """# Consultar cuánto debe el cliente actualmente
-    query_deuda = "SELECT vprestamo FROM prestamo WHERE CODIGO = %s AND nprestamo = %s LIMIT 1"
-    
-    cursor.execute(query_deuda, (pago.idcliente, pago.nprestamo,))
-    resultado = cursor.fetchone()
-   
-    if not resultado:
-        raise HTTPException(status_code=404, detail="El cliente no tiene préstamos activos")
-   
-    deuda_actual = resultado['vprestamo']
-   
-    # Comparar el monto enviado con la deuda total
-    if pago.monto > deuda_actual:
-        raise HTTPException(status_code=400, detail=f"El monto ({pago.monto}) excede la deuda actual ({deuda_actual})")"""
+    # Validar que el monto del pago no exceda la deuda total (deuda + mora)
+    estado_deuda = validar_monto_pago(
+        cursor,
+        pago.idcliente,
+        pago.idprestamo,
+        pago.monto
+    )
+
+    if not estado_deuda['puede_pagar']:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"El monto del pago (${pago.monto}) excede la deuda total. "
+                f"Deuda actual: ${estado_deuda['deuda_al_dia']:.2f}, "
+                f"Mora: ${estado_deuda['mora_total']:.2f}, "
+                f"Total deuda: ${estado_deuda['total_deuda']:.2f}"
+            )
+        )
 
     # Extraer el momento actual completo
     offset = timezone(timedelta(hours=-4))  # Zona horaria de RD.
@@ -43,8 +48,8 @@ def registrar_pago(
 
     # Consulta con 7 columnas para 7 valores
     query = """
-        INSERT INTO handheldata (codigo, Cliente, Fecha, Hora, MontoPgdo, nusuario, cusuario)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO handheldata (codigo, Cliente, Fecha, Hora, MontoPgdo, idprestamo, nusuario, cusuario)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
 
     try:
@@ -56,6 +61,7 @@ def registrar_pago(
                 fecha_solo,  # Fecha
                 hora_full,  # Hora (Objeto datetime completo para campo DATETIME)
                 pago.monto,  # MontoPgdo
+                pago.idprestamo,
                 pago.idusuario,  # nusuario
                 pago.usuario_nombre,  # cusuario
             ),

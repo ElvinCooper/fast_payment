@@ -28,6 +28,7 @@ def test_buscar_clientes_success(client, auth_header, mock_user_connection):
             "estado_cuota": "sin cuota vencida",
             "cantidad_cutas": 0,
             "deuda_al_dia": 0,
+            "deuda_total": 0,
             "mora_total": 0,
             "fecha": "13-03-2026 15:44:26",
         }
@@ -80,6 +81,7 @@ def test_obtener_clientes_success(client, auth_header, mock_user_connection):
             "cantidad_cutas": 0,
             "deuda_al_dia": 0,
             "mora_total": 0,
+            "deuda_total": 0,
             "fecha": "15-03-2026 10:00:00",
         }
     ]
@@ -110,6 +112,7 @@ def test_obtener_cliente_por_id_success(client, auth_header, mock_user_connectio
             "cantidad_cutas": 0,
             "deuda_al_dia": 0,
             "mora_total": 0,
+            "deuda_total": 0,
             "fecha": "15-03-2026 10:00:00",
         }
     ]
@@ -142,6 +145,7 @@ def test_cuotas_vencidas_success(client, auth_header, mock_user_connection):
             "ncuotas": 2,
             "deuda_al_dia": 500.00,
             "mora_total": 50.00,
+            "deuda_total": 0,
             "estado_cuota": "con cuota vencida",
         }
     ]
@@ -210,6 +214,7 @@ def test_buscar_clientes_con_fechas(client, auth_header, mock_user_connection):
             "cantidad_cutas": 2,
             "deuda_al_dia": 500.00,
             "mora_total": 50.00,
+            "deuda_total": 0,
             "fecha": "15-03-2026 10:00:00",
         }
     ]

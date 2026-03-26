@@ -14,10 +14,14 @@ def test_registrar_pago_success(client, auth_header, mock_user_connection):
     mock_conn, mock_cursor = mock_user_connection
     mock_cursor.lastrowid = 101  # Simular un ID insertado
 
+    # Mockear la respuesta del query de validación
+    mock_cursor.fetchone.return_value = (10000.0, 5000.0, 500.0)  # vprestamo, deuda_al_dia, mora_total
+
     pago_data = {
         "idcliente": 724353,
         "cliente_nombre": "Elvin",
         "monto": 2500.0,
+        "idprestamo": 1,
         "idusuario": 9,
         "usuario_nombre": "Andrew",
     }
@@ -69,6 +73,35 @@ def test_generar_recibo_pdf_success(client):
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/pdf"
         assert "attachment; filename=recibo_" in response.headers["content-disposition"]
+
+
+def test_registrar_pago_monto_excede_deuda(client, auth_header, mock_user_connection):
+    """Test cuando el monto del pago excede la deuda total"""
+    mock_conn, mock_cursor = mock_user_connection
+
+    # Mockear la respuesta del query de validación
+    mock_cursor.fetchone.return_value = (10000.0, 5000.0, 500.0)  # vprestamo, deuda_al_dia, mora_total
+
+    # Mockear el lastrowid para que el test no falle si pasa la validación (aunque no debería pasar)
+    mock_cursor.lastrowid = 101
+
+    pago_data = {
+        "idcliente": 724353,
+        "cliente_nombre": "Elvin",
+        "monto": 6000.0,  # Excede la deuda total de 5500.0
+        "idprestamo": 1,
+        "idusuario": 9,
+        "usuario_nombre": "Andrew",
+    }
+
+    response = client.post("/api/v1/pagos/", json=pago_data, headers=auth_header)
+
+    assert response.status_code == 400
+    assert "El monto del pago" in response.json()["detail"]
+    assert "excede la deuda total" in response.json()["detail"]
+    assert "Deuda actual: $5000.00" in response.json()["detail"]
+    assert "Mora: $500.00" in response.json()["detail"]
+    assert "Total deuda: $5500.00" in response.json()["detail"]
 
 
 def test_generar_recibo_pdf_error(client):

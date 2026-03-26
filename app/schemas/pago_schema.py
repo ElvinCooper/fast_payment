@@ -7,7 +7,7 @@ class PagoRequest(BaseModel):
     idcliente: int
     cliente_nombre: str = Field(min_length=3, max_length=45)
     monto: Decimal = Field(max_digits=10, decimal_places=2)
-    # idprestamo: int
+    idprestamo: int
     idusuario: int
     usuario_nombre: str
 

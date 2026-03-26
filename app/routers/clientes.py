@@ -33,23 +33,25 @@ def obtener_clientes(conn: MySQLConnection = Depends(get_user_connection)):
                 WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida' END AS estado_cuota,
             IFNULL(CV.cantidad_cutas, 0)     AS cantidad_cutas,
             IFNULL(CV.deuda_al_dia, 0)  AS deuda_al_dia,
-            IFNULL(MORA.mora_total, 0) AS mora_total
+            IFNULL(MORA.mora, 0) AS mora,
+            (IFNULL(CV.deuda_al_dia, 0) + IFNULL(MORA.mora, 0)) as deuda_total
         FROM cliente CL
         JOIN prestamo PR ON CL.idcliente = PR.codigo
         LEFT JOIN (
             SELECT
                 G.nprestamo,
                 COUNT(G.ncuotas) as cantidad_cutas,
-                SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
+                SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia,
+                SUM(IFNULL(G.vpendiente, 0)) AS vpendiente
             FROM pagos G
             WHERE G.fechaven <= SYSDATE()
             AND G.estatus = 0
-            
+
             GROUP BY G.nprestamo) CV ON PR.nprestamo = CV.nprestamo
         LEFT JOIN (
             SELECT 
                 nprestamo,
-                SUM(ROUND(mora_calc, 2)) AS mora_total
+                SUM(ROUND(mora_calc, 2)) AS mora
             FROM (
                 SELECT 
                     pa.nprestamo,
@@ -100,45 +102,68 @@ def listado_cuotas_vencidas(conn: MySQLConnection = Depends(get_user_connection)
     cursor = conn.cursor(dictionary=True)
 
     query = """
-            SELECT  P.NPRESTAMO,
-            P.CODIGO,
-            P.CLIENTE ,
-            P.FECHAP ,
-            P.fechav ,        
-            P.cel,        
-            COUNT(G.ncuotas) AS ncuotas,
-            SUM(IFNULL(G.vpendiente,0)) AS deuda_al_dia,
-            IFNULL(MORA.mora_total, 0) AS mora_total            
-            FROM prestamo P        
-            JOIN pagos G ON P.nprestamo = G.nprestamo
-            LEFT JOIN (
-                SELECT 
-                    nprestamo,
-                    SUM(ROUND(mora_calc, 2)) AS mora_total
-                FROM (
-                    SELECT 
-                        pa.nprestamo,
-                        CASE 
-                            WHEN p.fpago IN (1, 4, 5) THEN 
-                                (pa.vpendiente * p.mora / 100.0 / 30.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                            WHEN p.fpago IN (2, 7) THEN 
-                                (pa.vpendiente * p.mora / 100.0 / 4.0 / 7.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                            WHEN p.fpago IN (3, 6) THEN 
-                                (pa.vpendiente * p.mora / 100.0 / 2.0 / 15.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                        END AS mora_calc
-                    FROM pagos pa
-                    JOIN prestamo p ON pa.nprestamo = p.nprestamo
-                    WHERE pa.fechaplazo <= SYSDATE()
-                        AND pa.vpendiente > 0
-                        AND DATEDIFF(SYSDATE(), pa.fechaplazo) > 0
-                ) calc_mora
-                GROUP BY nprestamo
-            ) MORA ON P.nprestamo = MORA.nprestamo
-            WHERE G.fechaven <= SYSDATE() 
-            AND G.estatus = 0
-            AND P.pagado = 0
-            GROUP BY G.nprestamo
-            ORDER BY P.cliente
+            SELECT  
+    P.NPRESTAMO,
+    P.CODIGO,
+    P.CLIENTE,
+    P.FECHAP,
+    P.fechav,        
+    P.cel,        
+
+    COUNT(G.ncuotas) AS ncuotas,
+
+    SUM(IFNULL(G.vpendiente,0)) AS deuda_al_dia,
+
+    IFNULL(MORA.mora, 0) AS mora,
+
+    -- 🔥 NUEVO CAMPO
+    SUM(IFNULL(G.vpendiente,0)) + IFNULL(MORA.mora, 0) AS deuda_total
+
+    FROM prestamo P        
+
+    JOIN pagos G 
+        ON P.nprestamo = G.nprestamo
+
+    LEFT JOIN (
+        SELECT 
+            nprestamo,
+            SUM(ROUND(mora_calc, 2)) AS mora
+        FROM (
+            SELECT 
+                pa.nprestamo,
+                CASE 
+                    WHEN p.fpago IN (1, 4, 5) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 30.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+
+                    WHEN p.fpago IN (2, 7) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 4.0 / 7.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+
+                    WHEN p.fpago IN (3, 6) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 2.0 / 15.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+                END AS mora_calc
+
+            FROM pagos pa
+            JOIN prestamo p 
+                ON pa.nprestamo = p.nprestamo
+
+            WHERE pa.fechaplazo <= SYSDATE()
+            AND pa.vpendiente > 0
+            AND DATEDIFF(SYSDATE(), pa.fechaplazo) > 0
+
+        ) calc_mora
+
+        GROUP BY nprestamo
+
+    ) MORA 
+        ON P.nprestamo = MORA.nprestamo
+
+    WHERE G.fechaven <= SYSDATE() 
+    AND G.estatus = 0
+    AND P.pagado = 0
+
+    GROUP BY G.nprestamo
+
+    ORDER BY P.cliente;
         """
 
     cursor.execute(
@@ -168,60 +193,82 @@ def buscar_clientes_por_nombre(
 
     query = """
        SELECT
-        CL.idcliente,
-        CL.CLIENTE,
-        PR.nprestamo,
-        PR.vprestamo,
-        PR.FECHAP,
-        PR.fechav,
-        PR.cel,
-        CASE
-            WHEN PR.pagado = 0 THEN 'con cuota vencida'
-            ELSE 'sin cuota vencida'
-        END AS estado_cuota,
-        IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
-        IFNULL(CV.deuda_al_dia, 0) AS deuda_al_dia,
-        IFNULL(MORA.mora_total, 0) AS mora_total
-        FROM cliente CL
-        JOIN prestamo PR ON CL.idcliente = PR.CODIGO
-        LEFT JOIN (
-            SELECT
-                G.nprestamo,
-                COUNT(G.ncuotas) as cantidad_cutas,
-                SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
-            FROM pagos G
-            WHERE G.fechaven <= SYSDATE()
-            AND G.estatus = 0
-            GROUP BY G.nprestamo
-        ) CV ON PR.nprestamo = CV.nprestamo
-        LEFT JOIN (
+    CL.idcliente,
+    CL.CLIENTE,
+    PR.nprestamo,
+    PR.vprestamo,
+    PR.FECHAP,
+    PR.fechav,
+    PR.cel,
+
+    CASE
+        WHEN PR.pagado = 0 THEN 'con cuota vencida'
+        ELSE 'sin cuota vencida'
+    END AS estado_cuota,
+
+    IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
+    IFNULL(CV.deuda_al_dia, 0) AS deuda_al_dia,
+    IFNULL(MORA.mora, 0) AS mora,
+
+    -- 🔥 NUEVO CAMPO
+    IFNULL(CV.deuda_al_dia, 0) + IFNULL(MORA.mora, 0) AS deuda_total
+
+    FROM cliente CL
+
+    JOIN prestamo PR 
+        ON CL.idcliente = PR.CODIGO
+
+    LEFT JOIN (
+        SELECT
+            G.nprestamo,
+            COUNT(G.ncuotas) as cantidad_cutas,
+            SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
+        FROM pagos G
+        WHERE G.fechaven <= SYSDATE()
+        AND G.estatus = 0
+        GROUP BY G.nprestamo
+    ) CV 
+        ON PR.nprestamo = CV.nprestamo
+
+    LEFT JOIN (
+        SELECT 
+            nprestamo,
+            SUM(ROUND(mora_calc, 2)) AS mora
+        FROM (
             SELECT 
-                nprestamo,
-                SUM(ROUND(mora_calc, 2)) AS mora_total
-            FROM (
-                SELECT 
-                    pa.nprestamo,
-                    CASE 
-                        WHEN p.fpago IN (1, 4, 5) THEN 
-                            (pa.vpendiente * p.mora / 100.0 / 30.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                        WHEN p.fpago IN (2, 7) THEN 
-                            (pa.vpendiente * p.mora / 100.0 / 4.0 / 7.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                        WHEN p.fpago IN (3, 6) THEN 
-                            (pa.vpendiente * p.mora / 100.0 / 2.0 / 15.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                    END AS mora_calc
-                FROM pagos pa
-                JOIN prestamo p ON pa.nprestamo = p.nprestamo
-                WHERE pa.fechaplazo <= SYSDATE()
-                    AND pa.vpendiente > 0
-                    AND DATEDIFF(SYSDATE(), pa.fechaplazo) > 0
-            ) calc_mora
-            GROUP BY nprestamo
-        ) MORA ON PR.nprestamo = MORA.nprestamo
-        WHERE CL.CLIENTE LIKE %s 
-        AND CL.CLIENTE IS NOT NULL
-        AND PR.pagado != 1
-        LIMIT 20;
-          """
+                pa.nprestamo,
+                CASE 
+                    WHEN p.fpago IN (1, 4, 5) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 30.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+
+                    WHEN p.fpago IN (2, 7) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 4.0 / 7.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+
+                    WHEN p.fpago IN (3, 6) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 2.0 / 15.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+                END AS mora_calc
+
+            FROM pagos pa
+            JOIN prestamo p 
+                ON pa.nprestamo = p.nprestamo
+
+            WHERE pa.fechaplazo <= SYSDATE()
+            AND pa.vpendiente > 0
+            AND DATEDIFF(SYSDATE(), pa.fechaplazo) > 0
+
+        ) calc_mora
+
+        GROUP BY nprestamo
+
+    ) MORA 
+        ON PR.nprestamo = MORA.nprestamo
+
+    WHERE CL.CLIENTE LIKE %s 
+    AND CL.CLIENTE IS NOT NULL
+    AND PR.pagado != 1
+
+    LIMIT 20;
+            """
 
     cursor.execute(query, (f"%{params.CLIENTE}%",))
     resultados = cursor.fetchall()
@@ -249,56 +296,79 @@ def obtener_clientes_id(id: int, conn: MySQLConnection = Depends(get_user_connec
     cursor = conn.cursor(dictionary=True)
 
     query = """
-        SELECT CL.idcliente, 
-               CL.CLIENTE,
-               PR.nprestamo,
-               PR.vprestamo,
-               PR.FECHAP,
-               PR.fechav,
-               PR.cel,
-               CASE 
-                WHEN PR.pagado = 0 THEN 'con cuota vencida' ELSE 'sin cuota vencida'
-               END AS estado_cuota,
-               IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
-               IFNULL(CV.deuda_al_dia, 0) AS deuda_al_dia,
-               IFNULL(MORA.mora_total, 0) AS mora_total
-        FROM cliente CL
-        JOIN prestamo PR ON CL.idcliente = PR.CODIGO
-        LEFT JOIN (
-            SELECT
-                G.nprestamo,
-                COUNT(G.ncuotas) as cantidad_cutas,
-                SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
-            FROM pagos G
-            WHERE G.fechaven <= SYSDATE()
-            AND G.estatus = 0
-            GROUP BY G.nprestamo
-        ) CV ON PR.nprestamo = CV.nprestamo
-        LEFT JOIN (
+        SELECT 
+    CL.idcliente, 
+    CL.CLIENTE,
+    PR.nprestamo,
+    PR.vprestamo,
+    PR.FECHAP,
+    PR.fechav,
+    PR.cel,
+
+    CASE 
+        WHEN PR.pagado = 0 THEN 'con cuota vencida' 
+        ELSE 'sin cuota vencida'
+    END AS estado_cuota,
+
+    IFNULL(CV.cantidad_cutas, 0) AS cantidad_cutas,
+    IFNULL(CV.deuda_al_dia, 0) AS deuda_al_dia,
+    IFNULL(MORA.mora, 0) AS mora,
+
+    -- 🔥 NUEVO CAMPO
+    COALESCE(CV.deuda_al_dia, 0) + COALESCE(MORA.mora, 0) AS deuda_total
+
+    FROM cliente CL
+
+    JOIN prestamo PR 
+        ON CL.idcliente = PR.CODIGO
+
+    LEFT JOIN (
+        SELECT
+            G.nprestamo,
+            COUNT(G.ncuotas) as cantidad_cutas,
+            SUM(IFNULL(G.vpendiente, 0)) AS deuda_al_dia
+        FROM pagos G
+        WHERE G.fechaven <= SYSDATE()
+        AND G.estatus = 0
+        GROUP BY G.nprestamo
+    ) CV 
+        ON PR.nprestamo = CV.nprestamo
+
+    LEFT JOIN (
+        SELECT 
+            nprestamo,
+            SUM(ROUND(mora_calc, 2)) AS mora
+        FROM (
             SELECT 
-                nprestamo,
-                SUM(ROUND(mora_calc, 2)) AS mora_total
-            FROM (
-                SELECT 
-                    pa.nprestamo,
-                    CASE 
-                        WHEN p.fpago IN (1, 4, 5) THEN 
-                            (pa.vpendiente * p.mora / 100.0 / 30.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                        WHEN p.fpago IN (2, 7) THEN 
-                            (pa.vpendiente * p.mora / 100.0 / 4.0 / 7.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                        WHEN p.fpago IN (3, 6) THEN 
-                            (pa.vpendiente * p.mora / 100.0 / 2.0 / 15.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
-                    END AS mora_calc
-                FROM pagos pa
-                JOIN prestamo p ON pa.nprestamo = p.nprestamo
-                WHERE pa.fechaplazo <= SYSDATE()
-                    AND pa.vpendiente > 0
-                    AND DATEDIFF(SYSDATE(), pa.fechaplazo) > 0
-            ) calc_mora
-            GROUP BY nprestamo
-        ) MORA ON PR.nprestamo = MORA.nprestamo
-        WHERE CL.idcliente = %s
-        AND PR.pagado != 1
+                pa.nprestamo,
+                CASE 
+                    WHEN p.fpago IN (1, 4, 5) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 30.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+
+                    WHEN p.fpago IN (2, 7) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 4.0 / 7.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+
+                    WHEN p.fpago IN (3, 6) THEN 
+                        (pa.vpendiente * p.mora / 100.0 / 2.0 / 15.0) * DATEDIFF(SYSDATE(), pa.fechaplazo)
+                END AS mora_calc
+
+            FROM pagos pa
+            JOIN prestamo p 
+                ON pa.nprestamo = p.nprestamo
+
+            WHERE pa.fechaplazo <= SYSDATE()
+            AND pa.vpendiente > 0
+            AND DATEDIFF(SYSDATE(), pa.fechaplazo) > 0
+
+        ) calc_mora
+
+        GROUP BY nprestamo
+
+    ) MORA 
+        ON PR.nprestamo = MORA.nprestamo
+
+    WHERE CL.idcliente = %s
+    AND PR.pagado != 1;
     """
     cursor.execute(query, (id,))
     results = cursor.fetchall()
