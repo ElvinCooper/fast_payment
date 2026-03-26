@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from app.schemas.routing_schema import UserDBRoutingUpdate
-from app.database import get_connection
 from app.auth_utils import get_current_user, get_user_connection
 from mysql.connector import MySQLConnection
 import mysql.connector
@@ -34,7 +33,7 @@ def system_users(
     current_user: dict = Depends(get_current_user),
     conn: MySQLConnection = Depends(get_user_connection),
 ):
-    """Lista usuarios con acceso al sistema"""    
+    """Lista usuarios con acceso al sistema"""
 
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT idusuario, usuario FROM usuario ORDER BY idusuario")

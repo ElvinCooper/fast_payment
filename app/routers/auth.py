@@ -1,10 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Request
 from app.schemas.auth_schema import LoginRequest, LoginResponse
-from app.database import get_connection
-from app.auth_utils import create_access_token, get_user_connection
+from app.auth_utils import create_access_token
 from app.postgres_db import get_user_type, get_user_db_from_ciausers
 from app.limiter import limiter
-from mysql.connector import MySQLConnection
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])

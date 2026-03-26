@@ -1,7 +1,6 @@
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 from io import BytesIO
-from datetime import datetime
 
 
 def generar_recibo_termico(datos):

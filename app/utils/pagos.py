@@ -1,9 +1,9 @@
 from fastapi import HTTPException
-from mysql.connector import MySQLConnection
-from decimal import Decimal
 
 
-def validar_monto_pago(cursor, id_cliente: int, n_prestamo: int, monto_pago: float) -> dict:
+def validar_monto_pago(
+    cursor, id_cliente: int, n_prestamo: int, monto_pago: float
+) -> dict:
     """
     Valida si el monto del pago no excede el saldo pendiente total
     (deuda actual + mora acumulada)
@@ -75,8 +75,7 @@ def validar_monto_pago(cursor, id_cliente: int, n_prestamo: int, monto_pago: flo
 
     if not resultado:
         raise HTTPException(
-            status_code=404,
-            detail="Préstamo no encontrado o ya está pagado"
+            status_code=404, detail="Préstamo no encontrado o ya está pagado"
         )
 
     vprestamo = float(resultado[0] or 0)
@@ -88,10 +87,10 @@ def validar_monto_pago(cursor, id_cliente: int, n_prestamo: int, monto_pago: flo
     monto_pago_float = float(monto_pago)
 
     return {
-        'vprestamo': vprestamo,
-        'deuda_al_dia': deuda_al_dia,
-        'mora_total': mora_total,
-        'total_deuda': total_deuda,
-        'puede_pagar': monto_pago_float <= total_deuda,
-        'diferencia': monto_pago_float - total_deuda
+        "vprestamo": vprestamo,
+        "deuda_al_dia": deuda_al_dia,
+        "mora_total": mora_total,
+        "total_deuda": total_deuda,
+        "puede_pagar": monto_pago_float <= total_deuda,
+        "diferencia": monto_pago_float - total_deuda,
     }
