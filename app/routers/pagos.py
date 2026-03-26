@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago
-from app.auth_utils import get_user_connection
+from app.auth_utils import get_user_connection, get_current_user
 from app.utils.pagos import validar_monto_pago
 from mysql.connector import MySQLConnection, Error
 from datetime import datetime, timedelta, timezone
@@ -23,13 +23,10 @@ def registrar_pago(
 
     # Validar que el monto del pago no exceda la deuda total (deuda + mora)
     estado_deuda = validar_monto_pago(
-        cursor,
-        pago.idcliente,
-        pago.idprestamo,
-        pago.monto
+        cursor, pago.idcliente, pago.idprestamo, pago.monto
     )
 
-    if not estado_deuda['puede_pagar']:
+    if not estado_deuda["puede_pagar"]:
         raise HTTPException(
             status_code=400,
             detail=(
@@ -37,7 +34,7 @@ def registrar_pago(
                 f"Deuda actual: ${estado_deuda['deuda_al_dia']:.2f}, "
                 f"Mora: ${estado_deuda['mora_total']:.2f}, "
                 f"Total deuda: ${estado_deuda['total_deuda']:.2f}"
-            )
+            ),
         )
 
     # Extraer el momento actual completo
@@ -116,3 +113,31 @@ def generar_recibo(recibo: ComprobantePago):
             status_code=500,
             detail=f"Error al generar comprobante de pago: {err}",
         )
+
+
+@router.get("/recibo/reimpresion")
+def reimprimir_recibo(
+    current_user=Depends(get_current_user),
+    conn: MySQLConnection = Depends(get_user_connection),
+):
+    """
+    Listar todos los recibos realizados por el usuario actual
+    """
+
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+            SELECT cliente, MontoPgdo, cusuario
+            FROM handheldata
+            WHERE nusuario = %s
+            """
+    cursor.execute(query, (current_user["idusuario"],))
+    pagos = cursor.fetchall()
+    cursor.close()
+
+    if not pagos:
+        raise HTTPException(
+            status_code=404, detail="No se encontraron pagos para este usuario"
+        )
+
+    return pagos

@@ -1,86 +1,96 @@
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 from io import BytesIO
+from datetime import datetime
 
 
 def generar_recibo_termico(datos):
     buffer = BytesIO()
-    # Tamaño tipo ticket (80mm ancho x 200mm alto)
+
     width = 70 * mm
-    height = 80 * mm
+    height = 120 * mm  # aumentamos altura para mejor layout
 
     c = canvas.Canvas(buffer, pagesize=(width, height))
 
-    y = height - 20  # posición inicial
+    y = height - 15
 
-    # --- Header ---
-    c.setFont("Helvetica-Bold", 12)
-    c.drawCentredString(width / 2, y, "PAGOS BIOCAMILA APP")
-
-    y -= 15
-    c.setFont("Helvetica", 9)
-    c.drawCentredString(width / 2, y, f"Recibo: {datos['nro_recibo']}")
+    # ---------------- HEADER ----------------
+    c.setFont("Helvetica-Bold", 13)
+    c.drawCentredString(width / 2, y, "BIOCAMILA")
 
     y -= 12
-    c.drawCentredString(width / 2, y, f"Fecha: {datos['fecha']}")
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(width / 2, y, "Pagos & Servicios")
 
-    # Línea separadora
+    y -= 12
+    c.setFont("Helvetica", 8)
+    c.drawCentredString(width / 2, y, f"Recibo No: {datos['nro_recibo']}")
+
     y -= 10
-    c.line(10, y, width - 10, y)
+    c.drawCentredString(width / 2, y, f"{datos['fecha']}")
 
-    # --- Cuerpo ---
-    y -= 20
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(10, y, "Cliente:")
-    c.setFont("Helvetica", 9)
-    y -= 12
-    c.drawString(10, y, datos["cliente"])
+    # línea separadora
+    y -= 10
+    c.line(5, y, width - 5, y)
 
-    # Línea separadora
+    # ---------------- CLIENTE ----------------
     y -= 15
-    c.line(10, y, width - 10, y)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(5, y, "CLIENTE")
 
-    # --- Monto destacado ---
-    y -= 25
-    c.setFont("Helvetica-Bold", 11)
-    c.drawCentredString(width / 2, y, "MONTO PAGADO")
+    y -= 10
+    c.setFont("Helvetica", 9)
+    c.drawString(5, y, datos["cliente"])
+
+    # ---------------- DETALLE ----------------
+    y -= 15
+    c.line(5, y, width - 5, y)
+
+    y -= 12
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(5, y, "DETALLE")
+
+    y -= 12
+    c.setFont("Helvetica", 9)
+
+    # Etiqueta izquierda / valor derecha
+    c.drawString(5, y, "Monto:")
+    c.drawRightString(width - 5, y, f"${datos['monto']:,.2f}")
+
+    y -= 10
+    c.drawString(5, y, "Atendido por:")
+    c.drawRightString(width - 5, y, datos["atendido_por"])
+
+    # ---------------- TOTAL DESTACADO ----------------
+    y -= 18
+    c.line(5, y, width - 5, y)
+
+    y -= 20
+    c.setFont("Helvetica-Bold", 10)
+    c.drawCentredString(width / 2, y, "TOTAL PAGADO")
 
     y -= 18
-    c.setFont("Helvetica-Bold", 14)
+    c.setFont("Helvetica-Bold", 16)
     c.drawCentredString(width / 2, y, f"${datos['monto']:,.2f}")
 
-    # Línea separadora
-    y -= 15
-    c.line(10, y, width - 10, y)
+    # ---------------- FOOTER ----------------
+    y -= 20
+    c.line(5, y, width - 5, y)
 
-    y -= 15
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(10, y, "Atendido por:")
-    y -= 10
-    c.setFont("Helvetica", 9)
-    c.drawString(10, y, datos["atendido_por"])
-
-    # --- Nota final ---
-    y -= 30
+    y -= 12
     c.setFont("Helvetica", 8)
+    c.drawCentredString(width / 2, y, "Gracias por su pago")
+
+    y -= 10
+    c.drawCentredString(width / 2, y, "Conserve este recibo")
+
+    y -= 12
+    c.setFont("Helvetica-Bold", 8)
     c.drawCentredString(width / 2, y, "ORIGINAL - CLIENTE")
 
+    # ---------------- END ----------------
     c.showPage()
     c.save()
+
     buffer.seek(0)
-    # return filename
     return buffer
-
-
-# Ejemplo de uso
-# datos_pago = {
-#     "nro_recibo": "500922",
-#     "fecha": datetime.now().strftime("%d/%m/%Y %H:%M"),
-#     "cliente": "Elvin Cooper",
-#     # "concepto": "Pago Cuota Marzo",
-#     "monto": 2500.00,
-#     # "status": "COMPLETADO",
-#     "atendido_por": "Kelly"
-# }
-
-# generar_recibo_termico(datos_pago)

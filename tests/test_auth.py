@@ -4,7 +4,11 @@ from unittest.mock import patch, MagicMock
 def test_login_success(client, mock_db_conn, mock_pg_conn):
     # Mock para get_user_db_from_ciausers (busca en ciausers primero)
     with patch("app.routers.auth.get_user_db_from_ciausers") as mock_get_cia:
-        mock_get_cia.return_value = {"idusers": 1, "db_asignada": "finanzas_test"}
+        mock_get_cia.return_value = {
+            "idusers": 1,
+            "estatus": 1,
+            "db_asignada": "finanzas_test",
+        }
 
         # Mock para get_user_type
         with patch("app.routers.auth.get_user_type") as mock_get_type:
@@ -45,3 +49,21 @@ def test_login_failure(client, mock_db_conn, mock_pg_conn):
 
         assert response.status_code == 401
         assert response.json()["detail"] == "Usuario o clave incorrectos"
+
+
+def test_login_inactive_user(client, mock_db_conn, mock_pg_conn):
+    # Simular usuario con estatus = 0 (inactivo)
+    with patch("app.routers.auth.get_user_db_from_ciausers") as mock_get_cia:
+        mock_get_cia.return_value = {
+            "idusers": 1,
+            "estatus": 0,
+            "db_asignada": "finanzas_test",
+        }
+
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"usuario": "inactiveuser", "password": "correct_clave"},
+        )
+
+        assert response.status_code == 403
+        assert "inactivo" in response.json()["detail"]

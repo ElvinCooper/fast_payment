@@ -9,28 +9,6 @@ def auth_header():
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_obtener_usuario_success(client, auth_header, mock_user_connection):
-    mock_conn, mock_cursor = mock_user_connection
-
-    mock_cursor.fetchone.return_value = {"idusuario": 1, "usuario": "testuser"}
-
-    response = client.get("/api/v1/usuarios/1", headers=auth_header)
-
-    assert response.status_code == 200
-    assert response.json()["usuario"] == "testuser"
-
-
-def test_obtener_usuario_404(client, auth_header, mock_user_connection):
-    mock_conn, mock_cursor = mock_user_connection
-
-    mock_cursor.fetchone.return_value = None
-
-    response = client.get("/api/v1/usuarios/999", headers=auth_header)
-
-    assert response.status_code == 404
-    assert "No se encontro ningun usuario con este id" in response.json()["detail"]
-
-
 def test_me_success(client, auth_header):
     response = client.get("/api/v1/usuarios/me", headers=auth_header)
 

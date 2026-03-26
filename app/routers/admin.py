@@ -34,25 +34,17 @@ def system_users(
     current_user: dict = Depends(get_current_user),
     conn: MySQLConnection = Depends(get_user_connection),
 ):
-    """Lista usuarios con acceso al sistema"""
-
-    # from app.postgres_db import get_all_user_databases
+    """Lista usuarios con acceso al sistema"""    
 
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT idusuario, usuario FROM usuario ORDER BY idusuario"
-    )
+    cursor.execute("SELECT idusuario, usuario FROM usuario ORDER BY idusuario")
     results = cursor.fetchall()
     cursor.close()
 
+    return [
+        {"idusuario": user["idusuario"], "usuario": user["usuario"]} for user in results
+    ]
 
-    # user_dbs = get_all_user_databases()
-
-    # return [
-    #     {"usuario": user["usuario"], "db_asignada": user_dbs.get(user["idusuario"])}
-    #     for user in results
-    # ]
-    return [{"usuario": user["usuario"]} for user in results]
 
 @router.put("/user/routing")
 def asignar_acceso(

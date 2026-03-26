@@ -17,26 +17,11 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[UserBase])
-def obtener_usuarios(conn: MySQLConnection = Depends(get_user_connection)):
-    """Obtener todos los usuarios del sistema"""
-    cursor = conn.cursor(dictionary=True)
-
-    query = "SELECT idusuario, usuario FROM usuario"
-    cursor.execute(
-        query,
-    )
-    usuarios = cursor.fetchall()
-    cursor.close()
-
-    if not usuarios:
-        raise HTTPException(status_code=404, detail="No existen usuarios en el sistema")
-
-    return usuarios
-
-
 @router.get("/me", response_model=UserBase)
-def obtener_usuario_actual(current_user: dict = Depends(get_current_user), conn: MySQLConnection = Depends(get_connection)):
+def obtener_usuario_actual(
+    current_user: dict = Depends(get_current_user),
+    conn: MySQLConnection = Depends(get_connection),
+):
     """Obtener el usuario autenticado actual"""
     cursor = conn.cursor(dictionary=True)
 
@@ -49,13 +34,14 @@ def obtener_usuario_actual(current_user: dict = Depends(get_current_user), conn:
     cursor.execute(query, (current_user["idusuario"],))
     usuario = cursor.fetchone()
     cursor.close()
-    
-    return {"idusuario": current_user["idusuario"], 
-            "usuario": current_user["username"], 
-            "db_asignada": current_user["db_asignada"],
-            "empresa": usuario["cidescripcion"],
-            "tipouser": usuario["tipouser"],
-            }
+
+    return {
+        "idusuario": current_user["idusuario"],
+        "usuario": current_user["username"],
+        "db_asignada": current_user["db_asignada"],
+        "empresa": usuario["cidescripcion"],
+        "tipouser": usuario["tipouser"],
+    }
 
 
 @router.post("/logout")
@@ -111,21 +97,3 @@ def refresh_token(current_user: dict = Depends(get_current_user)):
     return TokenRefreshResponse(
         access_token=new_access_token, refresh_token=new_refresh_token
     )
-
-
-@router.get("/{id}", response_model=UserBase)
-def obtener_usuario_id(id: int, conn: MySQLConnection = Depends(get_user_connection)):
-    """Obtener un usuario por su id"""
-    cursor = conn.cursor(dictionary=True)
-
-    query = "SELECT idusuario, usuario FROM usuario WHERE idusuario = %s"
-    cursor.execute(query, (id,))
-    usuario = cursor.fetchone()
-    cursor.close()
-
-    if not usuario:
-        raise HTTPException(
-            status_code=404, detail="No se encontro ningun usuario con este id"
-        )
-
-    return usuario

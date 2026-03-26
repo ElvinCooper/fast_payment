@@ -15,7 +15,11 @@ def test_registrar_pago_success(client, auth_header, mock_user_connection):
     mock_cursor.lastrowid = 101  # Simular un ID insertado
 
     # Mockear la respuesta del query de validación
-    mock_cursor.fetchone.return_value = (10000.0, 5000.0, 500.0)  # vprestamo, deuda_al_dia, mora_total
+    mock_cursor.fetchone.return_value = (
+        10000.0,
+        5000.0,
+        500.0,
+    )  # vprestamo, deuda_al_dia, mora_total
 
     pago_data = {
         "idcliente": 724353,
@@ -80,7 +84,11 @@ def test_registrar_pago_monto_excede_deuda(client, auth_header, mock_user_connec
     mock_conn, mock_cursor = mock_user_connection
 
     # Mockear la respuesta del query de validación
-    mock_cursor.fetchone.return_value = (10000.0, 5000.0, 500.0)  # vprestamo, deuda_al_dia, mora_total
+    mock_cursor.fetchone.return_value = (
+        10000.0,
+        5000.0,
+        500.0,
+    )  # vprestamo, deuda_al_dia, mora_total
 
     # Mockear el lastrowid para que el test no falle si pasa la validación (aunque no debería pasar)
     mock_cursor.lastrowid = 101
@@ -120,3 +128,38 @@ def test_generar_recibo_pdf_error(client):
 
         assert response.status_code == 500
         assert "Error al generar comprobante" in response.json()["detail"]
+
+
+def test_reimprimir_recibo_success(client, auth_header, mock_user_connection):
+    """Test para reimprimir recibos del usuario actual"""
+    mock_conn, mock_cursor = mock_user_connection
+
+    mock_cursor.fetchall.return_value = [
+        {"cliente": "Juan Perez", "MontoPgdo": 2500.00, "cusuario": "Andrew"},
+        {"cliente": "Maria Lopez", "MontoPgdo": 1500.00, "cusuario": "Andrew"},
+    ]
+
+    response = client.get("/api/v1/pagos/recibo/reimpresion", headers=auth_header)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert data[0]["cliente"] == "Juan Perez"
+    assert data[1]["cliente"] == "Maria Lopez"
+
+
+def test_reimprimir_recibo_no_encontrado(client, auth_header, mock_user_connection):
+    """Test cuando no hay pagos para el usuario"""
+    mock_conn, mock_cursor = mock_user_connection
+    mock_cursor.fetchall.return_value = []
+
+    response = client.get("/api/v1/pagos/recibo/reimpresion", headers=auth_header)
+
+    assert response.status_code == 404
+    assert "No se encontraron pagos para este usuario" in response.json()["detail"]
+
+
+def test_reimprimir_recibo_sin_auth(client):
+    """Test para verificar que requiere autenticación"""
+    response = client.get("/api/v1/pagos/recibo/reimpresion")
+    assert response.status_code == 401

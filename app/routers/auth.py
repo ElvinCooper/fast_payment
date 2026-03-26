@@ -15,8 +15,6 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 def login(
     request: Request,
     login_data: LoginRequest,
-    # api_key: str = Depends(get_api_key),
-    conn: MySQLConnection = Depends(get_connection),
 ):
     """Verificar credenciales de usuario y generar token JWT"""
 
@@ -25,6 +23,11 @@ def login(
 
     if not user_db_info:
         raise HTTPException(status_code=401, detail="Usuario o clave incorrectos")
+
+    if user_db_info.get("estatus") != 1:
+        raise HTTPException(
+            status_code=403, detail="Usuario inactivo. Contacte al administrador"
+        )
 
     db_asignada = user_db_info["db_asignada"]
     user_id_cia = user_db_info["idusers"]

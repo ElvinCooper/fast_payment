@@ -33,7 +33,9 @@ def test_get_users_success(client, admin_auth_header, mock_db_conn):
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
+    assert data[0]["idusuario"] == 3
     assert data[0]["usuario"] == "testuser"
+    assert data[1]["idusuario"] == 4
     assert data[1]["usuario"] == "anotheruser"
 
 

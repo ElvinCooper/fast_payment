@@ -78,7 +78,7 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            SELECT u.idusers, c.descbd, c.cidescripcion 
+            SELECT u.idusers, u.estatus, c.descbd, c.cidescripcion 
             FROM ciausers u
             JOIN ciasetup c ON u.idcia = c.idcia
             WHERE u.usuario = %s AND u.clave = %s
@@ -89,6 +89,7 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
         if result:
             return {
                 "idusers": result["idusers"],
+                "estatus": result["estatus"],
                 "db_asignada": result["descbd"],
                 "empresa": result["cidescripcion"],
             }
