@@ -73,6 +73,22 @@ def actualizar_usuario_cia(
     return {"message": result}
 
 
+@router.get("/user/tipos")
+def listar_tipos_usuario(current_user: dict = Depends(get_current_user)):
+    """Lista los tipos de usuario disponibles en ciausers"""
+    user_id = current_user.get("idusuario")
+    if not is_admin(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Acceso denegado. Solo administradores pueden acceder a esta función",
+        )
+
+    from app.postgres_db import get_tipos_usuario
+
+    tipos = get_tipos_usuario()
+    return {"tipos_usuario": tipos}
+
+
 @router.get("/server/databases")
 def get_server_databases(
     conn: MySQLConnection = Depends(get_user_connection),

@@ -64,6 +64,26 @@ def get_user_type(user_id: int) -> str:
         conn.close()
 
 
+def get_tipos_usuario() -> list:
+    """Obtiene los tipos de usuario distintos desde ciausers"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT DISTINCT tipouser FROM ciausers WHERE tipouser IS NOT NULL"
+        )
+        return [row[0] for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
 def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
     """Obtiene la BD asignada y el id del usuario desde ciausers"""
     conn = mysql.connector.connect(

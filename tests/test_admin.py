@@ -110,6 +110,31 @@ def test_asignar_acceso_success(client, admin_auth_header, mock_db_conn):
     assert "actualizado" in response.json()["message"].lower()
 
 
+def test_listar_tipos_usuario_sin_auth(client):
+    response = client.get("/api/v1/admin/user/tipos")
+    assert response.status_code == 401
+
+
+def test_listar_tipos_usuario_no_admin(client, non_admin_auth_header):
+    with patch("app.routers.admin.is_admin", return_value=False):
+        response = client.get("/api/v1/admin/user/tipos", headers=non_admin_auth_header)
+
+    assert response.status_code == 403
+    assert "Solo administradores" in response.json()["detail"]
+
+
+def test_listar_tipos_usuario_success(client, admin_auth_header):
+    with patch("app.routers.admin.is_admin", return_value=True):
+        with patch(
+            "app.postgres_db.get_tipos_usuario", return_value=["admin", "standard"]
+        ):
+            response = client.get("/api/v1/admin/user/tipos", headers=admin_auth_header)
+
+    assert response.status_code == 200
+    assert "tipos_usuario" in response.json()
+    assert response.json()["tipos_usuario"] == ["admin", "standard"]
+
+
 def test_get_server_databases_sin_auth(client):
     response = client.get("/api/v1/admin/server/databases")
     assert response.status_code == 401
