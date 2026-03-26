@@ -82,7 +82,9 @@ def registrar_pago(
 
 
 @router.post("/recibo")
-def generar_recibo(recibo: ComprobantePago):
+def generar_recibo(
+    recibo: ComprobantePago, current_user: dict = Depends(get_current_user)
+):
     """
     Generar recibo de pago luego de realizar el envio
     """

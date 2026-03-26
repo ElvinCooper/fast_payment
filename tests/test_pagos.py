@@ -59,7 +59,7 @@ def test_registrar_pago_sin_auth(client):
     assert response.status_code == 401
 
 
-def test_generar_recibo_pdf_success(client):
+def test_generar_recibo_pdf_success(client, auth_header):
     """Test para generar recibo en PDF"""
     mock_pdf = BytesIO(b"PDF content")
 
@@ -72,11 +72,19 @@ def test_generar_recibo_pdf_success(client):
             "atendido_por": "Cajero Admin",
         }
 
-        response = client.post("/api/v1/pagos/recibo", json=recibo_data)
+        response = client.post(
+            "/api/v1/pagos/recibo", json=recibo_data, headers=auth_header
+        )
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/pdf"
         assert "attachment; filename=recibo_" in response.headers["content-disposition"]
+
+
+def test_generar_recibo_pdf_sin_auth(client):
+    """Test para verificar que requiere autenticación"""
+    response = client.post("/api/v1/pagos/recibo", json={})
+    assert response.status_code == 401
 
 
 def test_registrar_pago_monto_excede_deuda(client, auth_header, mock_user_connection):
@@ -112,7 +120,7 @@ def test_registrar_pago_monto_excede_deuda(client, auth_header, mock_user_connec
     assert "Total deuda: $5500.00" in response.json()["detail"]
 
 
-def test_generar_recibo_pdf_error(client):
+def test_generar_recibo_pdf_error(client, auth_header):
     """Test para manejar error al generar PDF"""
     with patch(
         "app.routers.pagos.generar_recibo_termico",
@@ -124,7 +132,9 @@ def test_generar_recibo_pdf_error(client):
             "atendido_por": "Cajero Admin",
         }
 
-        response = client.post("/api/v1/pagos/recibo", json=recibo_data)
+        response = client.post(
+            "/api/v1/pagos/recibo", json=recibo_data, headers=auth_header
+        )
 
         assert response.status_code == 500
         assert "Error al generar comprobante" in response.json()["detail"]
