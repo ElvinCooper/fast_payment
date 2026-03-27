@@ -189,7 +189,7 @@ def asignar_db_usuario(user_id: int, clave: str):
 
 
 def actualizar_usuario_cia(
-    user_id: int, clave: str = None, estatus: int = None, tipouser: str = None
+    user_id: int, clave: str | None = None, estatus: int | None = None, tipouser: str | None = None
 ):
     """Actualiza campos de un usuario en la tabla ciausers (bd central)"""
     conn = mysql.connector.connect(

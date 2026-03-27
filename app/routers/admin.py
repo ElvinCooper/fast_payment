@@ -60,11 +60,13 @@ def actualizar_usuario_cia(
 
     from app.postgres_db import actualizar_usuario_cia as actualizar_cia
 
+    # Solo pasar campos que fueron enviados explícitamente en el request
+    campos_enviados = user_data.model_fields_set
     result = actualizar_cia(
         user_data.idusers,
-        clave=user_data.clave,
-        estatus=user_data.estatus,
-        tipouser=user_data.tipouser,
+        clave=user_data.clave if "clave" in campos_enviados else None,
+        estatus=user_data.estatus if "estatus" in campos_enviados else None,
+        tipouser=user_data.tipouser if "tipouser" in campos_enviados else None,
     )
 
     if "no encontrado" in result.lower():
