@@ -29,36 +29,12 @@ def login(
 
     db_asignada = user_db_info["db_asignada"]
     user_id_cia = user_db_info["idusers"]
-
-    # Conectar a la BD del usuario
-    from app.database import HOST, PORT, USER, DBPASSWORD
-    import mysql.connector
-
-    user_conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
-        database=db_asignada,
-        charset="utf8",
-    )
-    cursor = user_conn.cursor(dictionary=True)
-
-    query = "SELECT idusuario, usuario FROM usuario WHERE usuario = %s"
-    cursor.execute(query, (login_data.usuario,))
-    user = cursor.fetchone()
-    cursor.close()
-    user_conn.close()
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Usuario o clave incorrectos")
-
     user_type = get_user_type(user_id_cia)
     empresa = user_db_info.get("empresa", "")
 
     access_token = create_access_token(
         data={
-            "sub": user["usuario"],
+            "sub": login_data.usuario,
             "id": user_id_cia,
             "db_asignada": db_asignada,
             "tipouser": user_type,
@@ -67,8 +43,8 @@ def login(
     )
 
     return {
-        "idusuario": user["idusuario"],
-        "usuario": user["usuario"],
+        "idusuario": user_id_cia,
+        "usuario": login_data.usuario,
         "access_token": access_token,
         "token_type": "bearer",  # nosec: B105
         "message": "Login exitoso",
