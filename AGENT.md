@@ -2,6 +2,24 @@
 
 Este documento establece las directrices técnicas obligatorias para la generación de código y asistencia en este proyecto. Se basa en los estándares de **FastAPI**, **SQLModel**, **Pydantic** y **PostgreSQL**.
 
+## Context7 - Documentación de Librerías
+
+* **Uso de Context7:** Cuando el usuario pregunte sobre librerías, frameworks, APIs, configuración o ejemplos de código, se debe usar **Context7** para obtener documentación actualizada.
+* **Activación:** Agregar `use context7` al final del prompt o usar las herramientas `resolve-library-id` y `query-docs` disponibles en el MCP de Context7.
+* **Verificar Versión:** Cuando el usuario mencione una versión específica de la librería, usar esa versión al consultar la documentación.
+
+## Skills Disponibles
+
+El agente tiene acceso a las siguientes skills que debe usar cuando sea relevante:
+
+* **fastapi:** Para todo lo relacionado con FastAPI y Pydantic
+* **pytest-coverage:** Para ejecutar tests y aumentar coverage
+* **ci-cd-best-practices:** Para pipelines CI/CD y DevOps
+* **turnobarrio:** Sistema de gestión de turnos (solo si es relevante)
+* **find-skills:** Para descubrir e instalar nuevas skills
+
+* **Carga de Skill:** Cuando el usuario solicite algo relacionado a una skill, usar la herramienta `skill` para cargar las instrucciones completas de esa skill.
+
 ## 9. Protocolo de Interacción y Confirmación
 
 * **Aprobación Obligatoria:** El agente **nunca debe ejecutar cambios en archivos, crear directorios o instalar dependencias** sin una confirmación explícita del usuario por cada acción.
