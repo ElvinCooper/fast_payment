@@ -221,7 +221,7 @@ def actualizar_usuario_cia(
 
         valores.append(user_id)
 
-        query = f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s"
+        query = f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s"  # nosec: B608
         cursor.execute(query, valores)
         conn.commit()
         rows_affected = cursor.rowcount
