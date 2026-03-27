@@ -23,7 +23,7 @@ def registrar_pago(
 
     # Validar que el monto del pago no exceda la deuda total (deuda + mora)
     estado_deuda = validar_monto_pago(
-        cursor, pago.idcliente, pago.idprestamo, pago.monto
+        cursor, pago.idcliente, pago.nprestamo, pago.monto
     )
 
     if not estado_deuda["puede_pagar"]:
@@ -45,7 +45,7 @@ def registrar_pago(
 
     # Consulta con 7 columnas para 7 valores
     query = """
-        INSERT INTO handheldata (codigo, Cliente, Fecha, Hora, MontoPgdo, idprestamo, nusuario, cusuario)
+        INSERT INTO handheldata (codigo, Cliente, Fecha, Hora, MontoPgdo, nprestamo, nusuario, cusuario)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
 
@@ -58,7 +58,7 @@ def registrar_pago(
                 fecha_solo,  # Fecha
                 hora_full,  # Hora (Objeto datetime completo para campo DATETIME)
                 pago.monto,  # MontoPgdo
-                pago.idprestamo,
+                pago.nprestamo,
                 pago.idusuario,  # nusuario
                 pago.usuario_nombre,  # cusuario
             ),
@@ -129,9 +129,10 @@ def reimprimir_recibo(
     cursor = conn.cursor(dictionary=True)
 
     query = """
-            SELECT cliente, MontoPgdo, cusuario
+            SELECT cliente, MontoPgdo, cusuario, DATE_FORMAT(fecha, '%d/%m/%Y') AS fecha
             FROM handheldata
             WHERE nusuario = %s
+            ORDER BY fecha DESC
             """
     cursor.execute(query, (current_user["idusuario"],))
     pagos = cursor.fetchall()

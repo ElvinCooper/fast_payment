@@ -25,7 +25,7 @@ def test_registrar_pago_success(client, auth_header, mock_user_connection):
         "idcliente": 724353,
         "cliente_nombre": "Elvin",
         "monto": 2500.0,
-        "idprestamo": 1,
+        "nprestamo": 1,
         "idusuario": 9,
         "usuario_nombre": "Andrew",
     }
@@ -105,7 +105,7 @@ def test_registrar_pago_monto_excede_deuda(client, auth_header, mock_user_connec
         "idcliente": 724353,
         "cliente_nombre": "Elvin",
         "monto": 6000.0,  # Excede la deuda total de 5500.0
-        "idprestamo": 1,
+        "nprestamo": 1,
         "idusuario": 9,
         "usuario_nombre": "Andrew",
     }
@@ -145,8 +145,18 @@ def test_reimprimir_recibo_success(client, auth_header, mock_user_connection):
     mock_conn, mock_cursor = mock_user_connection
 
     mock_cursor.fetchall.return_value = [
-        {"cliente": "Juan Perez", "MontoPgdo": 2500.00, "cusuario": "Andrew"},
-        {"cliente": "Maria Lopez", "MontoPgdo": 1500.00, "cusuario": "Andrew"},
+        {
+            "cliente": "Juan Perez",
+            "MontoPgdo": 2500.00,
+            "cusuario": "Andrew",
+            "fecha": "27/03/2026",
+        },
+        {
+            "cliente": "Maria Lopez",
+            "MontoPgdo": 1500.00,
+            "cusuario": "Andrew",
+            "fecha": "26/03/2026",
+        },
     ]
 
     response = client.get("/api/v1/pagos/recibo/reimpresion", headers=auth_header)
@@ -155,6 +165,7 @@ def test_reimprimir_recibo_success(client, auth_header, mock_user_connection):
     data = response.json()
     assert len(data) == 2
     assert data[0]["cliente"] == "Juan Perez"
+    assert data[0]["fecha"] == "27/03/2026"
     assert data[1]["cliente"] == "Maria Lopez"
 
 
