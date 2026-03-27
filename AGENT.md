@@ -8,6 +8,13 @@ Este documento establece las directrices técnicas obligatorias para la generaci
 * **Activación:** Agregar `use context7` al final del prompt o usar las herramientas `resolve-library-id` y `query-docs` disponibles en el MCP de Context7.
 * **Verificar Versión:** Cuando el usuario mencione una versión específica de la librería, usar esa versión al consultar la documentación.
 
+## GitHub Actions - Verificación de Workflows
+
+* **Verificación Obligatoria:** Después de cada push, el agente debe verificar el estado del workflow en GitHub Actions.
+* **Si falla:** Investigar la causa del fallo, analizar los logs de error, y corregir el problema.
+* **Comandos:** Usar `gh run list` o `gh run view` para verificar el estado.
+* **No abandonar:** El agente debe quedarse atento hasta que el workflow pase exitosamente o hasta que se identifique y solucione el problema.
+
 ## Skills Disponibles
 
 El agente tiene acceso a las siguientes skills que debe usar cuando sea relevante:
