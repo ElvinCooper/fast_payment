@@ -31,6 +31,7 @@ def login(
     user_id_cia = user_db_info["idusers"]
     user_type = user_db_info.get("tipouser")
     empresa = user_db_info.get("empresa", "")
+    idcia = user_db_info.get("idcia")
 
     access_token = create_access_token(
         data={
@@ -39,6 +40,7 @@ def login(
             "db_asignada": db_asignada,
             "tipouser": user_type,
             "empresa": empresa,
+            "idcia": idcia,
         }
     )
 

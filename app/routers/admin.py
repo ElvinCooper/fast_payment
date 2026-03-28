@@ -34,10 +34,15 @@ def system_users(
     current_user: dict = Depends(get_current_user),
     conn: MySQLConnection = Depends(get_cia_connection),
 ):
-    """Lista usuarios con acceso al sistema"""
+    """Lista usuarios de la compañía del usuario logueado"""
 
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT idusers, usuario, tipouser FROM ciausers ORDER BY idusers")
+    query = """
+            SELECT idusers, usuario, tipouser FROM ciausers
+            WHERE idcia = %s
+            ORDER BY idusers            
+            """
+    cursor.execute(query, (current_user["idcia"],))
     results = cursor.fetchall()
     cursor.close()
 
