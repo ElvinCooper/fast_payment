@@ -129,7 +129,7 @@ def reimprimir_recibo(
     cursor = conn.cursor(dictionary=True)
 
     query = """
-            SELECT cliente, MontoPgdo, cusuario, DATE_FORMAT(fecha, '%d/%m/%Y') AS fecha
+            SELECT cliente, MontoPgdo, cusuario, DATE_FORMAT(Hora, '%d/%m/%Y %H:%i') AS fecha
             FROM handheldata
             WHERE nusuario = %s
             ORDER BY fecha DESC
