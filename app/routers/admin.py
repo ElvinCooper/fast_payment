@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from app.schemas.routing_schema import UserCIAUpdate
 from app.auth_utils import get_current_user, get_user_connection
+from app.database import get_cia_connection
 from mysql.connector import MySQLConnection
 import mysql.connector
 from dotenv import load_dotenv
@@ -31,17 +32,22 @@ def is_admin(user_id: int | None) -> bool:
 @router.get("/users")
 def system_users(
     current_user: dict = Depends(get_current_user),
-    conn: MySQLConnection = Depends(get_user_connection),
+    conn: MySQLConnection = Depends(get_cia_connection),
 ):
     """Lista usuarios con acceso al sistema"""
 
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT idusuario, usuario FROM usuario ORDER BY idusuario")
+    cursor.execute("SELECT idusers, usuario, tipouser FROM ciausers ORDER BY idusers")
     results = cursor.fetchall()
     cursor.close()
 
     return [
-        {"idusuario": user["idusuario"], "usuario": user["usuario"]} for user in results
+        {
+            "idusuario": user["idusers"],
+            "usuario": user["usuario"],
+            "tipouser": user["tipouser"],
+        }
+        for user in results
     ]
 
 

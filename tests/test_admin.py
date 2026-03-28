@@ -20,12 +20,12 @@ def test_get_users_sin_auth(client):
     assert response.status_code == 401
 
 
-def test_get_users_success(client, admin_auth_header, mock_db_conn):
-    mock_conn, mock_cursor = mock_db_conn
+def test_get_users_success(client, admin_auth_header, mock_cia_conn):
+    mock_conn, mock_cursor = mock_cia_conn
 
     mock_cursor.fetchall.return_value = [
-        {"idusuario": 3, "usuario": "testuser"},
-        {"idusuario": 4, "usuario": "anotheruser"},
+        {"idusers": 3, "usuario": "testuser", "tipouser": "admin"},
+        {"idusers": 4, "usuario": "anotheruser", "tipouser": "standard"},
     ]
 
     response = client.get("/api/v1/admin/users", headers=admin_auth_header)
@@ -35,12 +35,13 @@ def test_get_users_success(client, admin_auth_header, mock_db_conn):
     assert len(data) == 2
     assert data[0]["idusuario"] == 3
     assert data[0]["usuario"] == "testuser"
+    assert data[0]["tipouser"] == "admin"
     assert data[1]["idusuario"] == 4
-    assert data[1]["usuario"] == "anotheruser"
+    assert data[1]["tipouser"] == "standard"
 
 
-def test_get_users_empty(client, admin_auth_header, mock_db_conn):
-    mock_conn, mock_cursor = mock_db_conn
+def test_get_users_empty(client, admin_auth_header, mock_cia_conn):
+    mock_conn, mock_cursor = mock_cia_conn
     mock_cursor.fetchall.return_value = []
 
     response = client.get("/api/v1/admin/users", headers=admin_auth_header)

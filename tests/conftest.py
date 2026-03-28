@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 from app.main import app
 from app.auth_utils import get_user_connection
+from app.database import get_cia_connection
 
 
 @pytest.fixture
@@ -19,6 +20,19 @@ def mock_db_conn():
 
     # Sobrescribir la dependencia get_user_connection
     app.dependency_overrides[get_user_connection] = lambda: mock_conn
+    yield mock_conn, mock_cursor
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def mock_cia_conn():
+    """Fixture para mockear la conexión a ciadatabase"""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+
+    # Sobrescribir la dependencia get_cia_connection
+    app.dependency_overrides[get_cia_connection] = lambda: mock_conn
     yield mock_conn, mock_cursor
     app.dependency_overrides.clear()
 
