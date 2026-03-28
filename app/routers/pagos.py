@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago
 from app.auth_utils import get_user_connection, get_current_user
 from app.utils.pagos import validar_monto_pago
