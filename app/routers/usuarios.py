@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from app.schemas.usuario_schema import UserBase
 from app.auth_utils import (
     get_current_user,
@@ -11,6 +11,23 @@ router = APIRouter(
     prefix="/api/v1/usuarios",
     tags=["Usuarios"],
 )
+
+
+def _agregar_token_blocklist(jti: str, idusuario: int):
+    """Inserta el token en la blocklist de PostgreSQL"""
+    from app.postgres_db import get_pg_connection
+
+    conn = get_pg_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO token_blocklist (jti, fecha_creacion, idusuario) VALUES (%s, CURRENT_DATE, %s)",
+            (jti, idusuario),
+        )
+        conn.commit()
+        cursor.close()
+    finally:
+        conn.close()
 
 
 @router.get("/me", response_model=UserBase)
@@ -26,32 +43,26 @@ def obtener_usuario_actual(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/logout")
-def logout(current_user: dict = Depends(get_current_user)):
+def logout(
+    current_user: dict = Depends(get_current_user),
+    background_tasks: BackgroundTasks = Depends(lambda: None),
+):
     """Invalidar el token actual agregándolo a la blocklist"""
-    from app.postgres_db import get_pg_connection
-
-    conn = get_pg_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO token_blocklist (jti, fecha_creacion, idusuario) VALUES (%s, CURRENT_DATE, %s)",
-            (
-                current_user["jti"],
-                current_user["idusuario"],
-            ),
-        )
-        conn.commit()
-        cursor.close()
-    finally:
-        conn.close()
+    background_tasks.add_task(
+        _agregar_token_blocklist,
+        current_user["jti"],
+        current_user["idusuario"],
+    )
 
     return {"message": "Sesión cerrada con éxito"}
 
 
 @router.post("/refresh")
-def refresh_token(current_user: dict = Depends(get_current_user)):
+def refresh_token(
+    current_user: dict = Depends(get_current_user),
+    background_tasks: BackgroundTasks = Depends(lambda: None),
+):
     """Renovar los tokens de acceso"""
-    from app.postgres_db import get_pg_connection
     from app.schemas.auth_schema import TokenRefreshResponse
 
     jti = current_user["jti"]
@@ -59,17 +70,11 @@ def refresh_token(current_user: dict = Depends(get_current_user)):
     if is_token_revoked(jti):
         raise HTTPException(status_code=401, detail="Token ha sido revocado")
 
-    conn = get_pg_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO token_blocklist (jti, fecha_creacion, idusuario) VALUES (%s, CURRENT_DATE, %s)",
-            (jti, current_user["idusuario"]),
-        )
-        conn.commit()
-        cursor.close()
-    finally:
-        conn.close()
+    background_tasks.add_task(
+        _agregar_token_blocklist,
+        jti,
+        current_user["idusuario"],
+    )
 
     identity = {"sub": current_user["username"], "id": current_user["idusuario"]}
     new_access_token = create_access_token(data=identity)
