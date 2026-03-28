@@ -192,6 +192,7 @@ def asignar_db_usuario(user_id: int, clave: str):
 
 def actualizar_usuario_cia(
     user_id: int,
+    idcia: int,
     clave: str | None = None,
     estatus: int | None = None,
     tipouser: str | None = None,
@@ -225,8 +226,11 @@ def actualizar_usuario_cia(
             return "No hay campos para actualizar"
 
         valores.append(user_id)
+        valores.append(idcia)
 
-        query = f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s"  # nosec: B608
+        query = (
+            f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s AND idcia = %s"  # nosec: B608
+        )
         cursor.execute(query, valores)
         conn.commit()
         rows_affected = cursor.rowcount

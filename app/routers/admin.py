@@ -73,8 +73,10 @@ def actualizar_usuario_cia(
 
     # Solo pasar campos que fueron enviados explícitamente en el request
     campos_enviados = user_data.model_fields_set
+    idcia = current_user.get("idcia")
     result = actualizar_cia(
         user_data.idusers,
+        idcia,
         clave=user_data.clave if "clave" in campos_enviados else None,
         estatus=user_data.estatus if "estatus" in campos_enviados else None,
         tipouser=user_data.tipouser if "tipouser" in campos_enviados else None,
