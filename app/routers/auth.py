@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from app.schemas.auth_schema import LoginRequest, LoginResponse
 from app.auth_utils import create_access_token
-from app.postgres_db import get_user_type, get_user_db_from_ciausers
+from app.postgres_db import get_user_db_from_ciausers
 from app.limiter import limiter
 
 
@@ -29,7 +29,7 @@ def login(
 
     db_asignada = user_db_info["db_asignada"]
     user_id_cia = user_db_info["idusers"]
-    user_type = get_user_type(user_id_cia)
+    user_type = user_db_info.get("tipouser")
     empresa = user_db_info.get("empresa", "")
 
     access_token = create_access_token(

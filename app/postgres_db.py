@@ -98,7 +98,7 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            SELECT u.idusers, u.estatus, c.descbd, c.cidescripcion 
+            SELECT u.idusers, u.estatus, u.tipouser, c.descbd, c.cidescripcion 
             FROM ciausers u
             JOIN ciasetup c ON u.idcia = c.idcia
             WHERE u.usuario = %s AND u.clave = %s
@@ -110,6 +110,7 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
             return {
                 "idusers": result["idusers"],
                 "estatus": result["estatus"],
+                "tipouser": result["tipouser"],
                 "db_asignada": result["descbd"],
                 "empresa": result["cidescripcion"],
             }
@@ -189,7 +190,10 @@ def asignar_db_usuario(user_id: int, clave: str):
 
 
 def actualizar_usuario_cia(
-    user_id: int, clave: str | None = None, estatus: int | None = None, tipouser: str | None = None
+    user_id: int,
+    clave: str | None = None,
+    estatus: int | None = None,
+    tipouser: str | None = None,
 ):
     """Actualiza campos de un usuario en la tabla ciausers (bd central)"""
     conn = mysql.connector.connect(
