@@ -44,8 +44,8 @@ def obtener_usuario_actual(current_user: dict = Depends(get_current_user)):
 
 @router.post("/logout")
 def logout(
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = Depends(lambda: None),
 ):
     """Invalidar el token actual agregándolo a la blocklist"""
     background_tasks.add_task(
@@ -59,8 +59,8 @@ def logout(
 
 @router.post("/refresh")
 def refresh_token(
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
-    background_tasks: BackgroundTasks = Depends(lambda: None),
 ):
     """Renovar los tokens de acceso"""
     from app.schemas.auth_schema import TokenRefreshResponse
