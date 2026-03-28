@@ -129,12 +129,14 @@ def reimprimir_recibo(
     cursor = conn.cursor(dictionary=True)
 
     query = """
-            SELECT cliente, MontoPgdo, cusuario, DATE_FORMAT(Hora, '%d/%m/%Y %H:%i') AS fecha
-            FROM handheldata
-            WHERE nusuario = %s
+            SELECT h.cliente, h.MontoPgdo, h.cusuario, DATE_FORMAT(h.Hora, '%d/%m/%Y %H:%i') AS fecha
+            FROM handheldata h
+            JOIN ciadatabase.ciausers u ON h.nusuario = u.idusers
+            WHERE u.idusers = %s 
+            AND u.idcia = %s
             ORDER BY fecha DESC
             """
-    cursor.execute(query, (current_user["idusuario"],))
+    cursor.execute(query, (current_user["idusuario"], current_user["idcia"]))
     pagos = cursor.fetchall()
     cursor.close()
 
