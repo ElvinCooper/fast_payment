@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago
 from app.auth_utils import get_user_connection, get_current_user
 from app.utils.pagos import validar_monto_pago
@@ -7,11 +7,14 @@ from datetime import datetime, timedelta, timezone
 from fastapi.responses import StreamingResponse
 from app.services.recibo_pdf import generar_recibo_termico
 import uuid
+import logging
 
 router = APIRouter(
     prefix="/api/v1/pagos",
     tags=["Pagos"],
 )
+
+logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=PagoResponse)
