@@ -217,7 +217,9 @@ def actualizar_usuario_cia(
             valores.append(clave)
         if estatus is not None:
             campos.append("estatus = %s")
-            valores.append(estatus)
+            valores.append(
+                str(estatus)
+            )  # Convertir a string para compatibilidad con decimal
         if tipouser is not None:
             campos.append("tipouser = %s")
             valores.append(tipouser)
@@ -231,9 +233,11 @@ def actualizar_usuario_cia(
         query = (
             f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s AND idcia = %s"  # nosec: B608
         )
+
         cursor.execute(query, valores)
         conn.commit()
         rows_affected = cursor.rowcount
+
         cursor.close()
 
         if rows_affected == 0:
