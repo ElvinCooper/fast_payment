@@ -1,17 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from app.schemas.routing_schema import UserCIAUpdate
 from app.auth_utils import get_current_user, get_user_connection
-from app.database import get_cia_connection
+from app.database import get_cia_connection, HOST, PORT, USER, DBPASSWORD
 from mysql.connector import MySQLConnection
 import mysql.connector
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-HOST = os.getenv("HOST")
-PORT = os.getenv("PORT")
-USER = os.getenv("USER")
-DBPASSWORD = os.getenv("DBPASSWORD")
 
 router = APIRouter(
     prefix="/api/v1/admin",

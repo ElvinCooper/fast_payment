@@ -2,8 +2,11 @@ import mysql.connector
 from mysql.connector import Error
 from dotenv import load_dotenv
 import os
+import logging
 
 load_dotenv()
+logger = logging.getLogger(__name__)
+
 HOST = os.getenv("HOST", "localhost")
 PORT = os.getenv("PORT", 3306)
 DATABASE = os.getenv("DATABASE")
@@ -37,7 +40,7 @@ def get_connection(user_id: int = None):
         yield conn
 
     except Error as e:
-        print(f"Error de conexión: {e}")
+        logger.error(f"Error de conexión: {e}")
         raise e
     finally:
         if "conn" in locals() and conn.is_connected():
@@ -60,7 +63,7 @@ def get_cia_connection():
         )
         yield conn
     except Error as e:
-        print(f"Error de conexión a ciadatabase: {e}")
+        logger.error(f"Error de conexión a ciadatabase: {e}")
         raise e
     finally:
         if "conn" in locals() and conn.is_connected():

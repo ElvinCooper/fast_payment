@@ -7,14 +7,11 @@ from datetime import datetime, timedelta, timezone
 from fastapi.responses import StreamingResponse
 from app.services.recibo_pdf import generar_recibo_termico
 import uuid
-import logging
 
 router = APIRouter(
     prefix="/api/v1/pagos",
     tags=["Pagos"],
 )
-
-logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=PagoResponse)
