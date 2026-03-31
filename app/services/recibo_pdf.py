@@ -25,7 +25,8 @@ def generar_recibo_termico(datos):
     c.setFont("Helvetica", 8)
     c.drawCentredString(width / 2, y, f"Recibo No: {datos['nro_recibo']}")
 
-    y -= 10
+    y -= 12
+    c.setFont("Helvetica-Bold", 12)  # Fuente más grande y en negrita para la fecha
     c.drawCentredString(width / 2, y, f"{datos['fecha']}")
 
     # línea separadora

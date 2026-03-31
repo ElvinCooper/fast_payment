@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago
+from typing import List
+from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago, ReimpresionResponse
 from app.auth_utils import get_user_connection, get_current_user
 from app.utils.pagos import validar_monto_pago
 from mysql.connector import MySQLConnection, Error
@@ -118,7 +119,7 @@ def generar_recibo(
         )
 
 
-@router.get("/recibo/reimpresion")
+@router.get("/recibo/reimpresion", response_model=List[ReimpresionResponse])
 def reimprimir_recibo(
     current_user=Depends(get_current_user),
     conn: MySQLConnection = Depends(get_user_connection),

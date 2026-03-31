@@ -40,3 +40,13 @@ class ComprobantePago(BaseModel):
     cliente: str = Field(min_length=3, max_length=45)
     monto: Decimal = Field(max_digits=10, decimal_places=2)
     atendido_por: str = Field(min_length=3, max_length=45)
+    
+    
+class ReimpresionResponse(BaseModel):
+    idnum: int
+    cliente: str = Field(min_length=3, max_length=45)
+    MontoPgdo: Decimal = Field(max_digits=10, decimal_places=2)
+    cusuario: str = Field(min_length=3, max_length=45)
+    fecha: Optional[str] = None
+    
+    
