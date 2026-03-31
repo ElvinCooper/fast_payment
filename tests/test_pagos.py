@@ -6,7 +6,27 @@ from io import BytesIO
 
 @pytest.fixture
 def auth_header():
-    token = create_access_token(data={"sub": "testuser", "id": 1})
+    token = create_access_token(
+        data={
+            "sub": "testuser",
+            "id": 1,
+            "db_name": "finanzas_test",
+            "tipouser": "admin",
+        }
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def auth_header_regular_user():
+    token = create_access_token(
+        data={
+            "sub": "testuser",
+            "id": 2,
+            "db_name": "finanzas_test",
+            "tipouser": "user",
+        }
+    )
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -67,6 +87,7 @@ def test_generar_recibo_pdf_success(client, auth_header):
         mock_gen.return_value = mock_pdf
 
         recibo_data = {
+            "idnum": 106,
             "cliente": "Juan Perez",
             "monto": 2500.00,
             "atendido_por": "Cajero Admin",
@@ -127,6 +148,7 @@ def test_generar_recibo_pdf_error(client, auth_header):
         side_effect=Exception("Error generando PDF"),
     ):
         recibo_data = {
+            "idnum": 106,
             "cliente": "Juan Perez",
             "monto": 2500.00,
             "atendido_por": "Cajero Admin",
@@ -140,47 +162,49 @@ def test_generar_recibo_pdf_error(client, auth_header):
         assert "Error al generar comprobante" in response.json()["detail"]
 
 
-def test_reimprimir_recibo_success(client, auth_header, mock_user_connection):
-    """Test para reimprimir recibos del usuario actual"""
+def test_historial_pagos_success(client, auth_header, mock_user_connection):
+    """Test para obtener historial de pagos como admin"""
     mock_conn, mock_cursor = mock_user_connection
 
     mock_cursor.fetchall.return_value = [
         {
+            "idnum": 1,
             "cliente": "Juan Perez",
             "MontoPgdo": 2500.00,
             "cusuario": "Andrew",
-            "fecha": "27/03/2026",
+            "fecha": "27/03/2026 10:30",
         },
         {
+            "idnum": 2,
             "cliente": "Maria Lopez",
             "MontoPgdo": 1500.00,
             "cusuario": "Andrew",
-            "fecha": "26/03/2026",
+            "fecha": "26/03/2026 09:15",
         },
     ]
 
-    response = client.get("/api/v1/pagos/recibo/reimpresion", headers=auth_header)
+    response = client.get("/api/v1/pagos/historial", headers=auth_header)
 
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
     assert data[0]["cliente"] == "Juan Perez"
-    assert data[0]["fecha"] == "27/03/2026"
+    assert data[0]["idnum"] == 1
     assert data[1]["cliente"] == "Maria Lopez"
 
 
-def test_reimprimir_recibo_no_encontrado(client, auth_header, mock_user_connection):
+def test_historial_pagos_no_encontrado(client, auth_header, mock_user_connection):
     """Test cuando no hay pagos para el usuario"""
     mock_conn, mock_cursor = mock_user_connection
     mock_cursor.fetchall.return_value = []
 
-    response = client.get("/api/v1/pagos/recibo/reimpresion", headers=auth_header)
+    response = client.get("/api/v1/pagos/historial", headers=auth_header)
 
     assert response.status_code == 404
     assert "No se encontraron pagos para este usuario" in response.json()["detail"]
 
 
-def test_reimprimir_recibo_sin_auth(client):
+def test_historial_pagos_sin_auth(client):
     """Test para verificar que requiere autenticación"""
-    response = client.get("/api/v1/pagos/recibo/reimpresion")
+    response = client.get("/api/v1/pagos/historial")
     assert response.status_code == 401

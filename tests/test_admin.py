@@ -5,13 +5,31 @@ from app.auth_utils import create_access_token
 
 @pytest.fixture
 def admin_auth_header():
-    token = create_access_token(data={"sub": "admin", "id": 1})
+    token = create_access_token(
+        data={
+            "sub": "admin",
+            "id": 1,
+            "db_name": "finanzas_test",
+            "tipouser": "admin",
+            "username": "admin",
+            "idcia": 1,
+        }
+    )
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 def non_admin_auth_header():
-    token = create_access_token(data={"sub": "user", "id": 4})
+    token = create_access_token(
+        data={
+            "sub": "user",
+            "id": 4,
+            "db_name": "finanzas_test",
+            "tipouser": "user",
+            "username": "user",
+            "idcia": 1,
+        }
+    )
     return {"Authorization": f"Bearer {token}"}
 
 

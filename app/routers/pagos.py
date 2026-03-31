@@ -1,6 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from app.schemas.pago_schema import PagoRequest, PagoResponse, ComprobantePago, ReimpresionResponse
+from app.schemas.pago_schema import (
+    PagoRequest,
+    PagoResponse,
+    ComprobantePago,
+    ReimpresionResponse,
+)
 from app.auth_utils import get_user_connection, get_current_user
 from app.utils.pagos import validar_monto_pago
 from mysql.connector import MySQLConnection, Error
@@ -83,12 +88,32 @@ def registrar_pago(
         )
 
 
-@router.post("/recibo")
+@router.post(
+    "/recibo",
+    responses={
+        200: {
+            "content": {"application/pdf": {}},
+            "description": "Recibo de pago en formato PDF (tamaño térmico 70x120mm)",
+        },
+        500: {"description": "Error al generar el comprobante de pago"},
+    },
+)
 def generar_recibo(
     recibo: ComprobantePago, current_user: dict = Depends(get_current_user)
 ):
     """
-    Generar recibo de pago luego de realizar el envio
+    Genera un recibo de pago en formato PDF térmico.
+
+    Genera un comprobante PDF con la información del pago realizado.
+    El PDF incluye: encabezado de la empresa, número de recibo, datos del cliente,
+    monto pagado y usuario que atendió la transacción.
+
+    - **idnum**: Número único de pago/recibo
+    - **cliente**: Nombre del cliente que realizó el pago
+    - **monto**: Monto pagado en RD$
+    - **atendido_por**: Usuario que procesó el pago
+
+    Returns: Archivo PDF con el recibo (Content-Type: application/pdf)
     """
     offset = timezone(timedelta(hours=-4))  # Zona horaria de RD.
     ahora = datetime.now(offset)
@@ -119,26 +144,32 @@ def generar_recibo(
         )
 
 
-@router.get("/recibo/reimpresion", response_model=List[ReimpresionResponse])
-def reimprimir_recibo(
+@router.get("/historial", response_model=List[ReimpresionResponse])
+def historial_pagos(
     current_user=Depends(get_current_user),
     conn: MySQLConnection = Depends(get_user_connection),
 ):
     """
-    Listar todos los recibos realizados por el usuario actual
+    Listar todos los pagos realizados por el usuario actual
     """
-
     cursor = conn.cursor(dictionary=True)
 
-    query = """
+    if current_user["tipouser"] == "admin":
+        query = """
             SELECT h.idnum, h.cliente, h.MontoPgdo, h.cusuario, DATE_FORMAT(h.Hora, '%d/%m/%Y %H:%i') AS fecha
             FROM handheldata h
-            JOIN ciadatabase.ciausers u ON h.nusuario = u.idusers
-            WHERE u.idusers = %s 
-            AND u.idcia = %s
-            ORDER BY fecha DESC
-            """
-    cursor.execute(query, (current_user["idusuario"], current_user["idcia"]))
+            ORDER BY h.Hora DESC
+        """
+        cursor.execute(query)
+    else:
+        query = """
+            SELECT h.idnum, h.cliente, h.MontoPgdo, h.cusuario, DATE_FORMAT(h.Hora, '%d/%m/%Y %H:%i') AS fecha
+            FROM handheldata h
+            WHERE h.nusuario = %s
+            ORDER BY h.Hora DESC
+        """
+        cursor.execute(query, (current_user["idusuario"],))
+
     pagos = cursor.fetchall()
     cursor.close()
 

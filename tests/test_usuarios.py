@@ -5,7 +5,16 @@ from app.auth_utils import create_access_token
 
 @pytest.fixture
 def auth_header():
-    token = create_access_token(data={"sub": "testuser", "id": 1})
+    token = create_access_token(
+        data={
+            "sub": "testuser",
+            "id": 1,
+            "db_name": "finanzas_test",
+            "tipouser": "admin",
+            "username": "testuser",
+            "idcia": 1,
+        }
+    )
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -65,7 +74,16 @@ def test_refresh_revoked_token(client, mock_pg_conn):
     mock_cursor = mock_pg_conn
     mock_cursor.fetchone.return_value = {"jti": "some-jti"}
 
-    token = create_access_token(data={"sub": "testuser", "id": 1})
+    token = create_access_token(
+        data={
+            "sub": "testuser",
+            "id": 1,
+            "db_name": "finanzas_test",
+            "tipouser": "admin",
+            "username": "testuser",
+            "idcia": 1,
+        }
+    )
     auth_header = {"Authorization": f"Bearer {token}"}
 
     response = client.post("/api/v1/usuarios/refresh", headers=auth_header)
