@@ -12,7 +12,6 @@ from mysql.connector import MySQLConnection, Error
 from datetime import datetime, timedelta, timezone
 from fastapi.responses import StreamingResponse
 from app.services.recibo_pdf import generar_recibo_termico
-import uuid
 
 router = APIRouter(
     prefix="/api/v1/pagos",
