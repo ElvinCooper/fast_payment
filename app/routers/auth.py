@@ -1,7 +1,16 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
-from app.schemas.auth_schema import LoginRequest, LoginResponse, SwitchTenantRequest, SwitchTenantResponse
+from app.schemas.auth_schema import (
+    LoginRequest,
+    LoginResponse,
+    SwitchTenantRequest,
+    SwitchTenantResponse,
+)
 from app.auth_utils import create_access_token, get_current_user
-from app.postgres_db import get_user_db_from_ciausers, get_user_empresas, validate_user_empresa
+from app.postgres_db import (
+    get_user_db_from_ciausers,
+    get_user_empresas,
+    validate_user_empresa,
+)
 from app.limiter import limiter
 
 
@@ -53,7 +62,7 @@ def login(
         "idusuario": user_id,
         "usuario": login_data.usuario,
         "access_token": access_token,
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec: B105
         "message": "Login exitoso",
         "user_db": db_asignada,
         "db_name": db_asignada,
@@ -80,10 +89,7 @@ def switch_tenant(
     empresa_info = validate_user_empresa(user_id, empresa_id)
 
     if not empresa_info:
-        raise HTTPException(
-            status_code=403,
-            detail="No tienes acceso a esta empresa"
-        )
+        raise HTTPException(status_code=403, detail="No tienes acceso a esta empresa")
 
     # Generar nuevo JWT con la nueva BD
     new_token = create_access_token(
@@ -100,8 +106,8 @@ def switch_tenant(
 
     return {
         "access_token": new_token,
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec: B105
         "db_name": empresa_info["descbd"],
         "empresa": empresa_info["cidescripcion"],
-        "message": "Tenant cambiado exitosamente"
+        "message": "Tenant cambiado exitosamente",
     }
