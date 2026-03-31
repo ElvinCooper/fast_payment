@@ -61,12 +61,20 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         user_id: str = payload.get("id")
         user_name: str = payload.get("sub")
         jti: str = payload.get("jti")
-        db_asignada = payload.get("db_asignada")
+        db_name = payload.get("db_name")
 
         if user_id is None or user_name is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token inválido: faltan datos del usuario",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Validar que existe db_name (tenant activo)
+        if not db_name:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tenant no seleccionado",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -81,7 +89,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             "idusuario": user_id,
             "username": user_name,
             "jti": payload.get("jti"),
-            "db_asignada": db_asignada,
+            "db_name": db_name,  # NUEVO
+            "empresa_id": payload.get("empresa_id"),  # NUEVO
             "tipouser": payload.get("tipouser"),
             "empresa": payload.get("empresa"),
             "idcia": payload.get("idcia"),
@@ -107,3 +116,8 @@ def get_user_connection(current_user: dict = Depends(get_current_user)):
 
     user_id = current_user.get("idusuario")
     yield from get_db(user_id=user_id)
+
+
+def get_db_from_token(current_user: dict = Depends(get_current_user)):
+    """Extrae db_name del token para usarlo en la conexión"""
+    return current_user.get("db_name")

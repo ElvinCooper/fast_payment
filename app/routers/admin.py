@@ -138,18 +138,10 @@ def get_server_databases(
 
 
 @router.get("/empresas")
-def get_empresas(
-    current_user: dict = Depends(get_current_user),
-):
-    """Obtiene todas las empresas registradas"""
+def get_user_empresas_list(current_user: dict = Depends(get_current_user)):
+    """Obtiene las empresas asociadas al usuario logueado"""
+    from app.postgres_db import get_user_empresas
+
     user_id = current_user.get("idusuario")
-    if not is_admin(user_id):
-        raise HTTPException(
-            status_code=403,
-            detail="Acceso denegado. Solo administradores pueden acceder a esta función",
-        )
-
-    from app.postgres_db import get_all_empresas
-
-    empresas = get_all_empresas()
+    empresas = get_user_empresas(user_id)
     return {"empresas": empresas}

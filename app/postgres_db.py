@@ -82,7 +82,7 @@ def get_tipos_usuario() -> list:
 
 
 def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
-    """Obtiene la BD asignada y el id del usuario desde ciausers"""
+    """Obtiene la BD asignada y el id del usuario desde ciausers usando empresa_id"""
     conn = mysql.connector.connect(
         host=HOST,
         port=PORT,
@@ -95,9 +95,10 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            SELECT u.idusers, u.estatus, u.tipouser, u.idcia, c.descbd, c.cidescripcion 
+            SELECT u.idusers, u.estatus, u.tipouser, u.empresa_id,
+                   c.idcia, c.descbd, c.cidescripcion
             FROM ciausers u
-            JOIN ciasetup c ON u.idcia = c.idcia
+            JOIN ciasetup c ON u.empresa_id = c.idcia
             WHERE u.usuario = %s AND u.clave = %s
             """,
             (usuario, clave),
@@ -108,6 +109,7 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
                 "idusers": result["idusers"],
                 "estatus": result["estatus"],
                 "tipouser": result["tipouser"],
+                "empresa_id": result["empresa_id"],  # NUEVO
                 "idcia": result["idcia"],
                 "db_asignada": result["descbd"],
                 "empresa": result["cidescripcion"],
@@ -240,5 +242,57 @@ def actualizar_usuario_cia(
         if rows_affected == 0:
             return "Usuario no encontrado en ciausers"
         return "Usuario actualizado exitosamente"
+    finally:
+        conn.close()
+
+
+def get_user_empresas(user_id: int) -> list:
+    """Obtiene las empresas asociadas a un usuario via userempresa + ciasetup"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT e.idcia, e.cidescripcion, e.descbd
+            FROM userempresa ue
+            JOIN ciasetup e ON ue.empresa_id = e.idcia
+            WHERE ue.user_id = %s
+            """,
+            (user_id,),
+        )
+        return cursor.fetchall()
+    finally:
+        conn.close()
+
+
+def validate_user_empresa(user_id: int, empresa_id: int) -> dict | None:
+    """Valida que un usuario pertenece a una empresa y retorna info de la BD"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT e.idcia, e.cidescripcion, e.descbd
+            FROM userempresa ue
+            JOIN ciasetup e ON ue.empresa_id = e.idcia
+            WHERE ue.user_id = %s AND ue.empresa_id = %s
+            """,
+            (user_id, empresa_id),
+        )
+        return cursor.fetchone()
     finally:
         conn.close()

@@ -36,7 +36,7 @@ def obtener_usuario_actual(current_user: dict = Depends(get_current_user)):
     return {
         "idusuario": current_user["idusuario"],
         "usuario": current_user["username"],
-        "db_asignada": current_user["db_asignada"],
+        "db_asignada": current_user["db_name"],  # Corregido: db_name en lugar de db_asignada
         "empresa": current_user.get("empresa", ""),
         "tipouser": current_user.get("tipouser", ""),
     }
@@ -62,7 +62,7 @@ def refresh_token(
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
-    """Renovar los tokens de acceso"""
+    """Renovar los tokens de acceso manteniendo la información del tenant"""
     from app.schemas.auth_schema import TokenRefreshResponse
 
     jti = current_user["jti"]
@@ -76,7 +76,16 @@ def refresh_token(
         current_user["idusuario"],
     )
 
-    identity = {"sub": current_user["username"], "id": current_user["idusuario"]}
+    # Mantener toda la información del usuario incluyendo tenant
+    identity = {
+        "sub": current_user["username"],
+        "id": current_user["idusuario"],
+        "db_name": current_user["db_name"],  # Mantener tenant activo
+        "empresa_id": current_user["empresa_id"],
+        "tipouser": current_user.get("tipouser"),
+        "empresa": current_user.get("empresa"),
+        "idcia": current_user.get("idcia"),
+    }
     new_access_token = create_access_token(data=identity)
     new_refresh_token = create_refresh_token(data=identity)
 

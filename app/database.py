@@ -14,15 +14,16 @@ USER = os.getenv("USER")
 DBPASSWORD = os.getenv("DBPASSWORD")
 
 
-def get_connection(user_id: int = None):
-    """conexion nueva por cada request."""
-    from app.postgres_db import get_user_database
+def get_connection(user_id: int = None, db_name: str = None):
+    """Conexión dinámica por request - usa db_name del token si está disponible"""
 
-    db_name = DATABASE
-    if user_id:
-        db_asignada = get_user_database(user_id)
-        if db_asignada:
-            db_name = db_asignada
+    # Prioridad: db_name del token > user_id lookup > DATABASE default
+    target_db = db_name
+    if not target_db and user_id:
+        from app.postgres_db import get_user_database
+        target_db = get_user_database(user_id)
+    if not target_db:
+        target_db = DATABASE
 
     try:
         conn = mysql.connector.connect(
@@ -30,7 +31,7 @@ def get_connection(user_id: int = None):
             port=PORT,
             user=USER,
             password=DBPASSWORD,
-            database=db_name,
+            database=target_db,
             charset="utf8",
             ssl_disabled=True,
             autocommit=True,
@@ -40,7 +41,7 @@ def get_connection(user_id: int = None):
         yield conn
 
     except Error as e:
-        logger.error(f"Error de conexión: {e}")
+        logger.error(f"Error de conexión a {target_db}: {e}")
         raise e
     finally:
         if "conn" in locals() and conn.is_connected():
