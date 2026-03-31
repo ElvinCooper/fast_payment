@@ -31,10 +31,12 @@ class PagoRequest(BaseModel):
 
 class PagoResponse(BaseModel):
     idpago: Optional[int] = None
+    idnum: Optional[int] = None  # Añadir idnum para generar recibos
     message: str
 
 
 class ComprobantePago(BaseModel):
+    idnum: int
     cliente: str = Field(min_length=3, max_length=45)
     monto: Decimal = Field(max_digits=10, decimal_places=2)
     atendido_por: str = Field(min_length=3, max_length=45)

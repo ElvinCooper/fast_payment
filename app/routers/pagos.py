@@ -69,6 +69,7 @@ def registrar_pago(
 
         return {
             "idpago": id_pago if id_pago else None,
+            "idnum": id_pago if id_pago else None,  # Añadir idnum para el recibo
             "message": "Pago registrado exitosamente",
         }
 
@@ -93,7 +94,7 @@ def generar_recibo(
     ahora_str = ahora.strftime("%d-%m-%Y %H:%M")
 
     datos_recibo = {
-        "nro_recibo": str(uuid.uuid4())[:8],
+        "nro_recibo": recibo.idnum,
         "cliente": recibo.cliente,
         "fecha": ahora_str,
         "monto": recibo.monto,
@@ -129,7 +130,7 @@ def reimprimir_recibo(
     cursor = conn.cursor(dictionary=True)
 
     query = """
-            SELECT h.cliente, h.MontoPgdo, h.cusuario, DATE_FORMAT(h.Hora, '%d/%m/%Y %H:%i') AS fecha
+            SELECT h.idnum, h.cliente, h.MontoPgdo, h.cusuario, DATE_FORMAT(h.Hora, '%d/%m/%Y %H:%i') AS fecha
             FROM handheldata h
             JOIN ciadatabase.ciausers u ON h.nusuario = u.idusers
             WHERE u.idusers = %s 
