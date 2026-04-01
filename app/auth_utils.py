@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import os
 import uuid
+from app.postgres_db import get_user_empresas
 
 load_dotenv()
 
@@ -87,6 +88,13 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
                 detail="Token ha sido revocado",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+            
+        # Obtener empresas del usuario
+        empresas = get_user_empresas(user_id)
+
+        # Determinar si necesita selección
+        requires_selection = len(empresas) > 1  
+                  
         return {
             "idusuario": user_id,
             "username": user_name,
@@ -96,6 +104,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             "tipouser": payload.get("tipouser"),
             "empresa": payload.get("empresa"),
             "idcia": payload.get("idcia"),
+            "empresas": empresas if requires_selection else None,
+            "requires_selection": requires_selection
         }
 
     except jwt.ExpiredSignatureError:

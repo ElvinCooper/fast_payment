@@ -36,9 +36,11 @@ def obtener_usuario_actual(current_user: dict = Depends(get_current_user)):
     return {
         "idusuario": current_user["idusuario"],
         "usuario": current_user["username"],
-        "db_asignada": current_user["db_name"],  # Corregido: db_name en lugar de db_asignada
+        "db_asignada": current_user["db_name"],  
         "empresa": current_user.get("empresa", ""),
         "tipouser": current_user.get("tipouser", ""),
+        "empresas": current_user.get("empresas"),
+        "requires_selection": current_user.get("requires_selection")
     }
 
 

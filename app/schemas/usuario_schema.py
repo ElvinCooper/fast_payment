@@ -7,3 +7,5 @@ class UserBase(BaseModel):
     db_asignada: str | None =None
     empresa:  str | None = None
     tipouser: str | None = None
+    empresas: list[dict] | None = None 
+    requires_selection: bool = False 
