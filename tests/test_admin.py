@@ -208,33 +208,24 @@ def test_get_server_databases_error_conexion(client, admin_auth_header):
     """Test que simula un error al conectar al servidor MySQL"""
     import mysql.connector
 
-    # Mockear get_user_connection para evitar que intente conectar
+    # Mockear la conexión de usuario para el endpoint get_server_databases
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
-    mock_cursor.fetchone.return_value = {"idusuario": 1, "tipouser": "admin"}
     mock_conn.cursor.return_value = mock_cursor
+    mock_conn.is_connected.return_value = True
 
     with (
         patch("mysql.connector.connect") as mock_mysql_conn,
         patch("app.auth_utils.is_token_revoked", return_value=False),
         patch("app.routers.admin.is_admin", return_value=True),
-        patch("app.postgres_db.get_user_database") as mock_get_db,
-        patch("app.auth_utils.get_user_connection") as mock_user_conn,
     ):
-        # Configurar el mock para get_user_database
-        mock_get_db.return_value = "ciadatabase"
-        mock_user_conn.return_value = mock_conn
-
-        # Hacer que la conexión del servidor falle
-        def connect_side_effect(*args, **kwargs):
-            # Permitir la primera conexión (get_user_database),
-            # pero fallar la segunda (SHOW DATABASES)
-            if kwargs.get("database") == "ciadatabase":
-                mock_temp_conn = MagicMock()
-                return mock_temp_conn
-            raise mysql.connector.Error("Connection refused")
-
-        mock_mysql_conn.side_effect = connect_side_effect
+        # La primera conexión (get_user_connection - ciadatabase) debe ser mockeada con el mock_conn
+        mock_mysql_conn.side_effect = [
+            mock_conn,  # Para get_user_connection -> ciadatabase
+            mysql.connector.Error(
+                "Connection refused"
+            ),  # Para SHOW DATABASES (sin database)
+        ]
 
         response = client.get(
             "/api/v1/admin/server/databases", headers=admin_auth_header
