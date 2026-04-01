@@ -36,3 +36,5 @@ class SwitchTenantResponse(BaseModel):
     db_name: str
     empresa: str
     message: str
+    empresas: list[dict] | None = None
+    requires_selection: bool = False

@@ -11,7 +11,7 @@ load_dotenv()
 # Configuración JWT
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 2
+ACCESS_TOKEN_EXPIRE_HOURS = os.getenv("EXPIRE_HOURS")
 
 # Esquema de seguridad para Swagger
 security = HTTPBearer()
@@ -19,7 +19,9 @@ security = HTTPBearer()
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    expire = datetime.now(timezone.utc) + timedelta(
+        hours=int(ACCESS_TOKEN_EXPIRE_HOURS)
+    )
     jti = str(uuid.uuid4())
     to_encode.update({"exp": expire, "jti": jti})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -115,7 +117,8 @@ def get_user_connection(current_user: dict = Depends(get_current_user)):
     from app.database import get_connection as get_db
 
     user_id = current_user.get("idusuario")
-    yield from get_db(user_id=user_id)
+    db_name = current_user.get("db_name")
+    yield from get_db(user_id=user_id, db_name=db_name)
 
 
 def get_db_from_token(current_user: dict = Depends(get_current_user)):

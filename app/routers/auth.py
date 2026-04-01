@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Depends, BackgroundTasks
+from app.routers.usuarios import _agregar_token_blocklist
 from app.schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
@@ -78,18 +79,28 @@ def login(
 def switch_tenant(
     request: Request,
     tenant_data: SwitchTenantRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Cambiar de empresa/tenant - genera nuevo JWT con db_name"""
 
     user_id = current_user.get("idusuario")
     empresa_id = tenant_data.empresa_id
+    jti_anterior = current_user.get("jti")
 
     # Validar que el usuario pertenece a la empresa
     empresa_info = validate_user_empresa(user_id, empresa_id)
 
     if not empresa_info:
         raise HTTPException(status_code=403, detail="No tienes acceso a esta empresa")
+
+    # Invalidar token anterior
+    if jti_anterior:
+        background_tasks.add_task(_agregar_token_blocklist, jti_anterior, user_id)
+
+    # Obtener empresas del usuario
+    empresas = get_user_empresas(user_id)
+    requires_selection = len(empresas) > 1
 
     # Generar nuevo JWT con la nueva BD
     new_token = create_access_token(
@@ -101,6 +112,8 @@ def switch_tenant(
             "tipouser": current_user.get("tipouser"),
             "empresa": empresa_info["cidescripcion"],
             "idcia": empresa_info["idcia"],
+            "empresas": empresas,
+            "requires_selection": requires_selection,
         }
     )
 
@@ -109,5 +122,7 @@ def switch_tenant(
         "token_type": "bearer",  # nosec: B105
         "db_name": empresa_info["descbd"],
         "empresa": empresa_info["cidescripcion"],
+        "empresas": empresas,
+        "requires_selection": requires_selection,
         "message": "Tenant cambiado exitosamente",
     }
