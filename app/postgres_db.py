@@ -74,7 +74,7 @@ def get_tipos_usuario() -> list:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT DISTINCT tipouser FROM ciausers WHERE tipouser IS NOT NULL"
+            "SELECT DISTINCT tipouser FROM ciausers WHERE tipouser IS NOT NULL AND tipouser not in ('root')"
         )
         return [row[0] for row in cursor.fetchall()]
     finally:
@@ -242,6 +242,23 @@ def actualizar_usuario_cia(
         if rows_affected == 0:
             return "Usuario no encontrado en ciausers"
         return "Usuario actualizado exitosamente"
+    finally:
+        conn.close()
+
+
+def update_user_default_empresa(user_id: int, empresa_id: int) -> bool:
+    """Actualiza el campo empresa_id en ciausers para el user_id dado"""
+    conn = get_pg_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE ciausers SET empresa_id = %s WHERE idusers = %s",
+            (empresa_id, user_id),
+        )
+        conn.commit()
+        rows_affected = cursor.rowcount
+        cursor.close()
+        return rows_affected > 0
     finally:
         conn.close()
 

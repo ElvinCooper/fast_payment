@@ -11,6 +11,7 @@ from app.postgres_db import (
     get_user_db_from_ciausers,
     get_user_empresas,
     validate_user_empresa,
+    update_user_default_empresa,
 )
 from app.limiter import limiter
 
@@ -97,6 +98,9 @@ def switch_tenant(
     # Invalidar token anterior
     if jti_anterior:
         background_tasks.add_task(_agregar_token_blocklist, jti_anterior, user_id)
+
+    # Actualizar empresa default del usuario en PostgreSQL
+    background_tasks.add_task(update_user_default_empresa, user_id, empresa_id)
 
     # Obtener empresas del usuario
     empresas = get_user_empresas(user_id)

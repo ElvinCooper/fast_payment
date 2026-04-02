@@ -19,3 +19,7 @@ class UserCIAUpdate(BaseModel):
     tipouser: str | None = Field(
         default=None, max_length=20, description="admin, standard"
     )
+
+
+class DatabasesResponse(BaseModel):
+    databases: list[str]

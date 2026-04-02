@@ -1,5 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
-from app.schemas.routing_schema import UserCIAUpdate
+from app.schemas.routing_schema import UserCIAUpdate, DatabasesResponse
+from app.schemas.usuario_schema import (
+    UserTipos,
+    SystemUsersResponse,
+    UserEmprresaResponse,
+)
 from app.auth_utils import get_current_user, get_user_connection
 from app.database import get_cia_connection, HOST, PORT, USER, DBPASSWORD
 from mysql.connector import MySQLConnection
@@ -21,7 +26,7 @@ def is_admin(user_id: int | None) -> bool:
     return user_type is not None and user_type != "standard"
 
 
-@router.get("/users")
+@router.get("/users", response_model=list[SystemUsersResponse])
 def system_users(
     current_user: dict = Depends(get_current_user),
     conn: MySQLConnection = Depends(get_cia_connection),
@@ -80,7 +85,7 @@ def actualizar_usuario_cia(
     return {"message": result}
 
 
-@router.get("/user/tipos")
+@router.get("/user/tipos", response_model=UserTipos)
 def listar_tipos_usuario(current_user: dict = Depends(get_current_user)):
     """Lista los tipos de usuario disponibles en ciausers"""
     user_id = current_user.get("idusuario")
@@ -96,7 +101,7 @@ def listar_tipos_usuario(current_user: dict = Depends(get_current_user)):
     return {"tipos_usuario": tipos}
 
 
-@router.get("/server/databases")
+@router.get("/server/databases", response_model=DatabasesResponse)
 def get_server_databases(
     conn: MySQLConnection = Depends(get_user_connection),
     current_user: dict = Depends(get_current_user),
@@ -137,7 +142,7 @@ def get_server_databases(
         )
 
 
-@router.get("/empresas")
+@router.get("/empresas", response_model=UserEmprresaResponse)
 def get_user_empresas_list(current_user: dict = Depends(get_current_user)):
     """Obtiene las empresas asociadas al usuario logueado"""
     from app.postgres_db import get_user_empresas
