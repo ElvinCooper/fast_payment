@@ -12,7 +12,7 @@ load_dotenv()
 # Configuración JWT
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = os.getenv("EXPIRE_HOURS")
+ACCESS_TOKEN_EXPIRE_HOURS = os.getenv("EXPIRE_HOURS", "2")
 
 # Esquema de seguridad para Swagger
 security = HTTPBearer()
@@ -88,13 +88,13 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
                 detail="Token ha sido revocado",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-            
+
         # Obtener empresas del usuario
         empresas = get_user_empresas(user_id)
 
         # Determinar si necesita selección
-        requires_selection = len(empresas) > 1  
-                  
+        requires_selection = len(empresas) > 1
+
         return {
             "idusuario": user_id,
             "username": user_name,
@@ -105,7 +105,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             "empresa": payload.get("empresa"),
             "idcia": payload.get("idcia"),
             "empresas": empresas if requires_selection else None,
-            "requires_selection": requires_selection
+            "requires_selection": requires_selection,
         }
 
     except jwt.ExpiredSignatureError:
