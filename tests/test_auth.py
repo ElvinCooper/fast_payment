@@ -78,37 +78,52 @@ def test_login_inactive_user(client, mock_db_conn, mock_pg_conn):
 def test_switch_tenant_success(client, admin_token):
     with patch("app.routers.auth.validate_user_empresa") as mock_validate:
         with patch("app.routers.auth.update_user_default_empresa") as mock_update:
-            mock_validate.return_value = {
-                "descbd": "finanzas_prueba2",
-                "cidescripcion": "Empresa 2",
-                "idcia": 2,
-            }
-            mock_update.return_value = True
+            with patch("app.routers.auth.get_user_empresas") as mock_empresas:
+                mock_validate.return_value = {
+                    "descbd": "finanzas_prueba2",
+                    "cidescripcion": "Empresa 2",
+                    "idcia": 2,
+                }
+                mock_update.return_value = True
+                mock_empresas.return_value = [
+                    {
+                        "idcia": 1,
+                        "cidescripcion": "Empresa 1",
+                        "descbd": "finanzasprueba",
+                    },
+                    {
+                        "idcia": 2,
+                        "cidescripcion": "Empresa 2",
+                        "descbd": "finanzas_prueba2",
+                    },
+                ]
 
-            response = client.post(
-                "/api/v1/auth/switch-tenant",
-                json={"empresa_id": 2},
-                headers=admin_token,
-            )
+                response = client.post(
+                    "/api/v1/auth/switch-tenant",
+                    json={"empresa_id": 2},
+                    headers=admin_token,
+                )
 
-            assert response.status_code == 200
-            data = response.json()
-            assert "access_token" in data
-            assert data["db_name"] == "finanzas_prueba2"
-            assert data["empresa"] == "Empresa 2"
-            assert data["message"] == "Tenant cambiado exitosamente"
+                assert response.status_code == 200
+                data = response.json()
+                assert "access_token" in data
+                assert data["db_name"] == "finanzas_prueba2"
+                assert data["empresa"] == "Empresa 2"
+                assert data["message"] == "Tenant cambiado exitosamente"
 
 
 def test_switch_tenant_no_access(client, admin_token):
     with patch("app.routers.auth.validate_user_empresa", return_value=None):
-        response = client.post(
-            "/api/v1/auth/switch-tenant",
-            json={"empresa_id": 999},
-            headers=admin_token,
-        )
+        with patch("app.routers.auth.get_user_empresas") as mock_empresas:
+            mock_empresas.return_value = []
+            response = client.post(
+                "/api/v1/auth/switch-tenant",
+                json={"empresa_id": 999},
+                headers=admin_token,
+            )
 
-        assert response.status_code == 403
-        assert "No tienes acceso a esta empresa" in response.json()["detail"]
+            assert response.status_code == 403
+            assert "No tienes acceso a esta empresa" in response.json()["detail"]
 
 
 def test_switch_tenant_sin_auth(client):
