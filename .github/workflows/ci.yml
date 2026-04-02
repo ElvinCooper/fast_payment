@@ -27,7 +27,7 @@ jobs:
           --health-timeout=5s
           --health-retries=5
         volumes:
-          - ./scripts/init_mysql.sql:/docker-entrypoint-initdb.d/init_mysql.sql
+          - ${{ github.workspace }}/scripts/init_mysql.sql:/docker-entrypoint-initdb.d/init_mysql.sql
       
       postgres:
         image: postgres:15
