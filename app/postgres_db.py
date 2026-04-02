@@ -247,8 +247,15 @@ def actualizar_usuario_cia(
 
 
 def update_user_default_empresa(user_id: int, empresa_id: int) -> bool:
-    """Actualiza el campo empresa_id en ciausers para el user_id dado"""
-    conn = get_pg_connection()
+    """Actualiza el campo empresa_id en ciausers (MySQL ciadatabase) para el user_id dado"""
+    conn = mysql.connector.connect(
+        host=HOST,
+        port=PORT,
+        user=USER,
+        password=DBPASSWORD,
+        database="ciadatabase",
+        charset="utf8",
+    )
     try:
         cursor = conn.cursor()
         cursor.execute(
