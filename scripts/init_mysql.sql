@@ -19,10 +19,10 @@ CREATE TABLE IF NOT EXISTS ciausers (
 -- Crear tabla userempresa si no existe
 CREATE TABLE IF NOT EXISTS userempresa (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    iduser INT NOT NULL,
-    idcia INT NOT NULL,
-    INDEX idx_iduser (iduser),
-    INDEX idx_idcia (idcia)
+    user_id INT NOT NULL,
+    empresa_id INT NOT NULL,
+    INDEX idx_user_id (user_id),
+    INDEX idx_empresa_id (empresa_id)
 );
 
 -- Crear tabla ciasetup si no existe
@@ -45,7 +45,7 @@ INSERT INTO ciausers (usuario, clave, estatus, tipouser, empresa_id, idcia) VALU
 ON DUPLICATE KEY UPDATE tipouser = tipouser;
 
 -- Insertar datos de prueba para userempresa
-INSERT INTO userempresa (iduser, idcia) VALUES 
+INSERT INTO userempresa (user_id, empresa_id) VALUES 
     (1, 1),
     (1, 2)
-ON DUPLICATE KEY UPDATE idcia = idcia;
+ON DUPLICATE KEY UPDATE empresa_id = empresa_id;
