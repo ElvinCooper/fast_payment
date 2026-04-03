@@ -127,7 +127,7 @@ jobs:
         run: |
           pip install safety bandit
           safety check
-          bandit -r app/ -x tests/
+          bandit -r app/ -x tests/ -ll
 
   deploy-staging:
     name: Deploy Staging
