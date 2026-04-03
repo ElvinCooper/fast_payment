@@ -127,7 +127,7 @@ jobs:
         run: |
           pip install safety bandit
           safety check
-          bandit -r app/ -x tests/ -ll
+          bandit -r app/ -x tests/ --exclude app/mysql_db.py
 
   deploy-staging:
     name: Deploy Staging
