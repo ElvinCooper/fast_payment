@@ -22,6 +22,4 @@ class SystemUsersResponse(BaseModel):
 
 
 class UserEmprresaResponse(BaseModel):
-    idcia: int
-    ciadescription: str
-    descdb: str
+    empresas: list[dict]
