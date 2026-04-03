@@ -15,7 +15,7 @@ router = APIRouter(
 
 def _agregar_token_blocklist(jti: str, idusuario: int):
     """Inserta el token en la blocklist de PostgreSQL"""
-    from app.postgres_db import get_pg_connection
+    from app.mysql_db import get_pg_connection
 
     conn = get_pg_connection()
     try:
@@ -36,11 +36,11 @@ def obtener_usuario_actual(current_user: dict = Depends(get_current_user)):
     return {
         "idusuario": current_user["idusuario"],
         "usuario": current_user["username"],
-        "db_asignada": current_user["db_name"],  
+        "db_asignada": current_user["db_name"],
         "empresa": current_user.get("empresa", ""),
         "tipouser": current_user.get("tipouser", ""),
         "empresas": current_user.get("empresas"),
-        "requires_selection": current_user.get("requires_selection")
+        "requires_selection": current_user.get("requires_selection"),
     }
 
 

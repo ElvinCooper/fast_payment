@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import os
 import uuid
-from app.postgres_db import get_user_empresas
+from app.mysql_db import get_user_empresas
 
 load_dotenv()
 
@@ -43,7 +43,7 @@ def create_refresh_token(data: dict):
 
 def is_token_revoked(jti: str) -> bool:
     """Verifica si el token ha sido revocado consultando PostgreSQL"""
-    from app.postgres_db import get_pg_connection
+    from app.mysql_db import get_pg_connection
 
     conn = get_pg_connection()
     try:

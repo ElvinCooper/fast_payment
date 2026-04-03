@@ -7,7 +7,7 @@ from app.schemas.auth_schema import (
     SwitchTenantResponse,
 )
 from app.auth_utils import create_access_token, get_current_user
-from app.postgres_db import (
+from app.mysql_db import (
     get_user_db_from_ciausers,
     get_user_empresas,
     validate_user_empresa,

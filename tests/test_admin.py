@@ -79,7 +79,7 @@ def test_asignar_acceso_sin_auth(client):
 def test_asignar_acceso_usuario_no_existe(client, admin_auth_header, mock_db_conn):
     with patch("app.routers.admin.is_admin", return_value=True):
         with patch(
-            "app.postgres_db.actualizar_usuario_cia",
+            "app.mysql_db.actualizar_usuario_cia",
             return_value="Usuario no encontrado en ciausers",
         ):
             response = client.put(
@@ -95,7 +95,7 @@ def test_asignar_acceso_usuario_no_existe(client, admin_auth_header, mock_db_con
 def test_asignar_acceso_no_existe_en_mapeo(client, admin_auth_header, mock_db_conn):
     with patch("app.routers.admin.is_admin", return_value=True):
         with patch(
-            "app.postgres_db.actualizar_usuario_cia",
+            "app.mysql_db.actualizar_usuario_cia",
             return_value="Usuario no encontrado en ciausers",
         ):
             response = client.put(
@@ -111,7 +111,7 @@ def test_asignar_acceso_no_existe_en_mapeo(client, admin_auth_header, mock_db_co
 def test_asignar_acceso_success(client, admin_auth_header, mock_db_conn):
     with patch("app.routers.admin.is_admin", return_value=True):
         with patch(
-            "app.postgres_db.actualizar_usuario_cia",
+            "app.mysql_db.actualizar_usuario_cia",
             return_value="Usuario actualizado exitosamente",
         ):
             response = client.put(
@@ -145,7 +145,7 @@ def test_listar_tipos_usuario_no_admin(client, non_admin_auth_header):
 def test_listar_tipos_usuario_success(client, admin_auth_header):
     with patch("app.routers.admin.is_admin", return_value=True):
         with patch(
-            "app.postgres_db.get_tipos_usuario", return_value=["admin", "standard"]
+            "app.mysql_db.get_tipos_usuario", return_value=["admin", "standard"]
         ):
             response = client.get("/api/v1/admin/user/tipos", headers=admin_auth_header)
 

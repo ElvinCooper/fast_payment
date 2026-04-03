@@ -40,7 +40,7 @@ def mock_cia_conn():
 @pytest.fixture
 def mock_pg_conn():
     """Fixture para mockear la conexión a PostgreSQL"""
-    with patch("app.postgres_db.get_pg_connection") as mock_pg:
+    with patch("app.mysql_db.get_pg_connection") as mock_pg:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_conn.cursor.return_value = mock_cursor

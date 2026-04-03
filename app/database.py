@@ -20,7 +20,8 @@ def get_connection(user_id: int = None, db_name: str = None):
     # Prioridad: db_name del token > user_id lookup > DATABASE default
     target_db = db_name
     if not target_db and user_id:
-        from app.postgres_db import get_user_database
+        from app.mysql_db import get_user_database
+
         target_db = get_user_database(user_id)
     if not target_db:
         target_db = DATABASE

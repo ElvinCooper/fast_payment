@@ -20,7 +20,7 @@ def is_admin(user_id: int | None) -> bool:
     """Verifica si el usuario es administrador basándose en ciausers.tipouser"""
     if user_id is None:
         return False
-    from app.postgres_db import get_user_type
+    from app.mysql_db import get_user_type
 
     user_type = get_user_type(user_id)
     return user_type is not None and user_type != "standard"
@@ -66,7 +66,7 @@ def actualizar_usuario_cia(
             detail="Acceso denegado. Solo administradores pueden acceder a esta función",
         )
 
-    from app.postgres_db import actualizar_usuario_cia as actualizar_cia
+    from app.mysql_db import actualizar_usuario_cia as actualizar_cia
 
     # Solo pasar campos que fueron enviados explícitamente en el request
     campos_enviados = user_data.model_fields_set
@@ -95,7 +95,7 @@ def listar_tipos_usuario(current_user: dict = Depends(get_current_user)):
             detail="Acceso denegado. Solo administradores pueden acceder a esta función",
         )
 
-    from app.postgres_db import get_tipos_usuario
+    from app.mysql_db import get_tipos_usuario
 
     tipos = get_tipos_usuario()
     return {"tipos_usuario": tipos}
@@ -145,7 +145,7 @@ def get_server_databases(
 @router.get("/empresas", response_model=UserEmprresaResponse)
 def get_user_empresas_list(current_user: dict = Depends(get_current_user)):
     """Obtiene las empresas asociadas al usuario logueado"""
-    from app.postgres_db import get_user_empresas
+    from app.mysql_db import get_user_empresas
 
     user_id = current_user.get("idusuario")
     empresas = get_user_empresas(user_id)

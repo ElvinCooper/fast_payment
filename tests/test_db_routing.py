@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 from app.database import get_connection
-from app.postgres_db import (
+from app.mysql_db import (
     get_user_database,
     get_all_user_databases,
 )
@@ -11,7 +11,7 @@ class TestGetUserDatabase:
 
     def test_get_user_database_existe(self):
         """Verifica que obtiene la BD asignada correctamente"""
-        with patch("app.postgres_db.mysql.connector.connect") as mock_mysql:
+        with patch("app.mysql_db.mysql.connector.connect") as mock_mysql:
             mock_conn = MagicMock()
             mock_cursor = MagicMock()
             mock_cursor.fetchone.return_value = ("finanzasprueba",)
@@ -24,7 +24,7 @@ class TestGetUserDatabase:
 
     def test_get_user_database_no_existe(self):
         """Verifica que retorna None cuando no existe"""
-        with patch("app.postgres_db.mysql.connector.connect") as mock_mysql:
+        with patch("app.mysql_db.mysql.connector.connect") as mock_mysql:
             mock_conn = MagicMock()
             mock_cursor = MagicMock()
             mock_cursor.fetchone.return_value = None
@@ -59,7 +59,7 @@ class TestGetAllUserDatabases:
 
     def test_get_all_user_databases_retorna_dict(self):
         """Verifica que retorna un diccionario"""
-        with patch("app.postgres_db.mysql.connector.connect") as mock_mysql:
+        with patch("app.mysql_db.mysql.connector.connect") as mock_mysql:
             mock_conn = MagicMock()
             mock_cursor = MagicMock()
             mock_cursor.fetchall.return_value = [
@@ -79,7 +79,7 @@ class TestGetAllUserDatabases:
 
     def test_get_all_user_databases_vacio(self):
         """Verifica que retorna dict vacío cuando no hay usuarios"""
-        with patch("app.postgres_db.mysql.connector.connect") as mock_mysql:
+        with patch("app.mysql_db.mysql.connector.connect") as mock_mysql:
             mock_conn = MagicMock()
             mock_cursor = MagicMock()
             mock_cursor.fetchall.return_value = []
