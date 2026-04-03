@@ -1,37 +1,29 @@
 import mysql.connector
 from mysql.connector import Error
-from dotenv import load_dotenv
-import os
 import logging
+from app.config import get_settings
 
-load_dotenv()
 logger = logging.getLogger(__name__)
-
-HOST = os.getenv("HOST", "localhost")
-PORT = os.getenv("PORT", 3306)
-DATABASE = os.getenv("DATABASE")
-USER = os.getenv("USER")
-DBPASSWORD = os.getenv("DBPASSWORD")
+settings = get_settings()
 
 
-def get_connection(user_id: int = None, db_name: str = None):
+def get_connection(user_id: int | None = None, db_name: str | None = None):
     """Conexión dinámica por request - usa db_name del token si está disponible"""
 
-    # Prioridad: db_name del token > user_id lookup > DATABASE default
     target_db = db_name
     if not target_db and user_id:
         from app.mysql_db import get_user_database
 
         target_db = get_user_database(user_id)
     if not target_db:
-        target_db = DATABASE
+        target_db = settings.DATABASE
 
     try:
         conn = mysql.connector.connect(
-            host=HOST,
-            port=PORT,
-            user=USER,
-            password=DBPASSWORD,
+            host=settings.HOST,
+            port=settings.PORT,
+            user=settings.USER,
+            password=settings.DBPASSWORD,
             database=target_db,
             charset="utf8",
             ssl_disabled=True,
@@ -53,10 +45,10 @@ def get_cia_connection():
     """Conexión directa a la base de datos central ciadatabase"""
     try:
         conn = mysql.connector.connect(
-            host=HOST,
-            port=PORT,
-            user=USER,
-            password=DBPASSWORD,
+            host=settings.HOST,
+            port=settings.PORT,
+            user=settings.USER,
+            password=settings.DBPASSWORD,
             database="ciadatabase",
             charset="utf8",
             ssl_disabled=True,

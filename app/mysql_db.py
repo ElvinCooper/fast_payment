@@ -1,10 +1,10 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import os
-from app.database import HOST, PORT, USER, DBPASSWORD
-import mysql.connector
+from app.config import get_settings
 
-POSTGRES_URL = os.getenv("POSTGRES_BD")
+settings = get_settings()
+
+POSTGRES_URL = settings.POSTGRES_BD
 
 
 def get_pg_connection():
@@ -14,11 +14,13 @@ def get_pg_connection():
 
 
 def get_user_database(user_id: int) -> str:
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -41,11 +43,13 @@ def get_user_database(user_id: int) -> str:
 
 def get_user_type(user_id: int) -> str:
     """Obtiene el tipo de usuario desde ciausers"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -63,11 +67,13 @@ def get_user_type(user_id: int) -> str:
 
 def get_tipos_usuario() -> list:
     """Obtiene los tipos de usuario distintos desde ciausers"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -83,11 +89,13 @@ def get_tipos_usuario() -> list:
 
 def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
     """Obtiene la BD asignada y el id del usuario desde ciausers usando empresa_id"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -109,7 +117,7 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
                 "idusers": result["idusers"],
                 "estatus": result["estatus"],
                 "tipouser": result["tipouser"],
-                "empresa_id": result["empresa_id"],  # NUEVO
+                "empresa_id": result["empresa_id"],
                 "idcia": result["idcia"],
                 "db_asignada": result["descbd"],
                 "empresa": result["cidescripcion"],
@@ -121,11 +129,13 @@ def get_user_db_from_ciausers(usuario: str, clave: str) -> dict | None:
 
 def get_all_empresas() -> list:
     """Obtiene todas las empresas desde ciasetup"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -138,11 +148,13 @@ def get_all_empresas() -> list:
 
 
 def get_all_user_databases() -> dict:
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -161,18 +173,18 @@ def get_all_user_databases() -> dict:
 
 
 def asignar_db_usuario(user_id: int, clave: str):
-    """Asigna la clave a un usuario en MySQL
-    Actualiza la tabla usuario en la base de datos del usuario
-    """
+    """Asigna la clave a un usuario en MySQL"""
+    import mysql.connector
+
     db_asignada = get_user_database(user_id)
     if not db_asignada:
         return "Usuario no encontrado"
 
     mysql_conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database=db_asignada,
         charset="utf8",
     )
@@ -197,11 +209,13 @@ def actualizar_usuario_cia(
     tipouser: str | None = None,
 ):
     """Actualiza campos de un usuario en la tabla ciausers (bd central)"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -216,9 +230,7 @@ def actualizar_usuario_cia(
             valores.append(clave)
         if estatus is not None:
             campos.append("estatus = %s")
-            valores.append(
-                str(estatus)
-            )  # Convertir a string para compatibilidad con decimal
+            valores.append(str(estatus))
         if tipouser is not None:
             campos.append("tipouser = %s")
             valores.append(tipouser)
@@ -230,7 +242,7 @@ def actualizar_usuario_cia(
         valores.append(idcia)
 
         query = (
-            f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s AND idcia = %s"  # nosec: B608
+            f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s AND idcia = %s"
         )
 
         cursor.execute(query, valores)
@@ -248,11 +260,13 @@ def actualizar_usuario_cia(
 
 def update_user_default_empresa(user_id: int, empresa_id: int) -> bool:
     """Actualiza el campo empresa_id en ciausers (MySQL ciadatabase) para el user_id dado"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -272,11 +286,13 @@ def update_user_default_empresa(user_id: int, empresa_id: int) -> bool:
 
 def get_user_empresas(user_id: int) -> list:
     """Obtiene las empresas asociadas a un usuario via userempresa + ciasetup"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
@@ -298,11 +314,13 @@ def get_user_empresas(user_id: int) -> list:
 
 def validate_user_empresa(user_id: int, empresa_id: int) -> dict | None:
     """Valida que un usuario pertenece a una empresa y retorna info de la BD"""
+    import mysql.connector
+
     conn = mysql.connector.connect(
-        host=HOST,
-        port=PORT,
-        user=USER,
-        password=DBPASSWORD,
+        host=settings.HOST,
+        port=settings.PORT,
+        user=settings.USER,
+        password=settings.DBPASSWORD,
         database="ciadatabase",
         charset="utf8",
     )
