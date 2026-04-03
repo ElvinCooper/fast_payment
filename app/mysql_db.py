@@ -241,7 +241,7 @@ def actualizar_usuario_cia(
         valores.append(user_id)
         valores.append(idcia)
 
-        query = (
+        query = (  # nosec: B608
             f"UPDATE ciausers SET {', '.join(campos)} WHERE idusers = %s AND idcia = %s"
         )
 
