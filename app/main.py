@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from app.routers import clientes, pagos, usuarios, auth, admin
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from datetime import datetime
@@ -9,6 +10,7 @@ from slowapi.errors import RateLimitExceeded
 from app.limiter import limiter
 import logging
 import sys
+import traceback
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,12 +38,24 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Manejar errores de validación y hacer logging"""
     errors = exc.errors()
     logger.error(f"Validation error on {request.method} {request.url.path}: {errors}")
-    from fastapi.responses import JSONResponse
     from fastapi.encoders import jsonable_encoder
 
     return JSONResponse(
         status_code=422,
         content={"detail": jsonable_encoder(errors)},
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Manejador global de excepciones para debugging"""
+    logger.error(
+        f"Unhandled exception on {request.method} {request.url.path}: "
+        f"{type(exc).__name__}: {str(exc)}\n{traceback.format_exc()}"
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "code": 500},
     )
 
 
