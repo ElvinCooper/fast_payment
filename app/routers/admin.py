@@ -5,10 +5,13 @@ from app.schemas.usuario_schema import (
     SystemUsersResponse,
     UserEmprresaResponse,
 )
-from app.auth_utils import get_current_user, get_user_connection
-from app.database import get_cia_connection, HOST, PORT, USER, DBPASSWORD
+from app.dependencies import get_current_user, get_user_connection
+from app.database import get_cia_connection
+from app.config import get_settings
 from mysql.connector import MySQLConnection
 import mysql.connector
+
+settings = get_settings()
 
 router = APIRouter(
     prefix="/api/v1/admin",
@@ -117,10 +120,10 @@ def get_server_databases(
 
     try:
         temp_conn = mysql.connector.connect(
-            host=HOST,
-            port=PORT,
-            user=USER,
-            password=DBPASSWORD,
+            host=settings.HOST,
+            port=settings.PORT,
+            user=settings.USER,
+            password=settings.DBPASSWORD,
             charset="utf8",
             connect_timeout=5,
         )

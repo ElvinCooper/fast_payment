@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from app.config import get_settings
-from app.mysql_db import get_user_empresas, get_pg_connection
+from app.mysql_db import get_user_empresas
 
 settings = get_settings()
 security = HTTPBearer()
