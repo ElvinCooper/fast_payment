@@ -8,3 +8,4 @@ from app.dependencies import (  # noqa: F401
     is_token_revoked,
     CurrentUserDep,
 )
+from app.mysql_db import get_user_empresas  # noqa: F401
