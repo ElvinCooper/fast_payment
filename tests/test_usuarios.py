@@ -36,7 +36,7 @@ def test_me_without_auth(client):
 def test_logout_success(client, auth_header, mock_pg_conn):
     mock_cursor = mock_pg_conn
 
-    with patch("app.auth_utils.is_token_revoked", return_value=False):
+    with patch("app.dependencies.is_token_revoked", return_value=False):
         response = client.post("/api/v1/usuarios/logout", headers=auth_header)
 
     assert response.status_code == 200
@@ -54,7 +54,7 @@ def test_refresh_success(client, auth_header, mock_pg_conn):
     mock_cursor = mock_pg_conn
     mock_cursor.fetchone.return_value = None
 
-    with patch("app.auth_utils.is_token_revoked", return_value=False):
+    with patch("app.dependencies.is_token_revoked", return_value=False):
         response = client.post("/api/v1/usuarios/refresh", headers=auth_header)
 
     assert response.status_code == 200

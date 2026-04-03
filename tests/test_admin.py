@@ -174,7 +174,7 @@ def test_get_server_databases_success(client, admin_auth_header, mock_db_conn):
 
     with (
         patch("mysql.connector.connect") as mock_mysql_conn,
-        patch("app.auth_utils.is_token_revoked", return_value=False),
+        patch("app.dependencies.is_token_revoked", return_value=False),
     ):
         mock_mysql_conn.return_value.__enter__ = MagicMock(
             return_value=mock_mysql_conn.return_value
@@ -216,8 +216,8 @@ def test_get_server_databases_error_conexion(client, admin_auth_header):
 
     with (
         patch("mysql.connector.connect") as mock_mysql_conn,
-        patch("app.auth_utils.is_token_revoked", return_value=False),
-        patch("app.auth_utils.get_user_empresas", return_value=[]),
+        patch("app.dependencies.is_token_revoked", return_value=False),
+        patch("app.mysql_db.get_user_empresas", return_value=[]),
         patch("app.routers.admin.is_admin", return_value=True),
     ):
         # La primera conexión (get_user_connection - ciadatabase) debe ser mockeada con el mock_conn
